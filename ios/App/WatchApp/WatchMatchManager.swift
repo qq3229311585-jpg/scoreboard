@@ -261,6 +261,11 @@ final class WatchMatchManager: ObservableObject {
     func nextPeriod() {
         guard sessionSource == .local, supportsMultiPoint else { return }
         pushHistory()
+        // 第 4 节（含加时）结束：非平分则直接判胜，平分才进加时
+        if periodIndex >= 4 && teamAScore != teamBScore {
+            finishLocalMatch()
+            return
+        }
         periodIndex += 1
         updatePeriodLabel()
         summary = "进入\(periodLabel)"
@@ -326,6 +331,7 @@ final class WatchMatchManager: ObservableObject {
             print("[Watch][Match] applied phone state active=\(self.isMatchActive) score=\(self.teamAScore):\(self.teamBScore) period=\(self.periodIndex) ptWin=\(self.ptWin) totalSets=\(self.totalSets) setWins=\(self.setWins)")
             if self.isMatchActive && !self.isPaused {
                 self.startTicker()
+                self.workoutManager?.start(sport: self.sport)
             } else {
                 self.stopTicker()
                 self.workoutManager?.stop()

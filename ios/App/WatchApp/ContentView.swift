@@ -303,8 +303,7 @@ struct MatchView: View {
     @EnvironmentObject var match: WatchMatchManager
     @EnvironmentObject var phone: PhoneSessionManager
 
-    // 暂停时触发"重新设置"——退出比赛回到 IdleView
-    @State private var showResetConfirm = false
+    @State private var showFinishConfirm = false
 
     var body: some View {
         ZStack {
@@ -356,6 +355,13 @@ struct MatchView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .alert("结束比赛", isPresented: $showFinishConfirm) {
+            Button("结束", role: .destructive) {
+                if match.isLocalSession { match.finishLocalMatch() }
+                else { phone.requestStopFromWatch() }
+            }
+            Button("取消", role: .cancel) {}
+        }
     }
 
     // MARK: 顶部状态栏
@@ -425,8 +431,7 @@ struct MatchView: View {
             }
             ctrlBtn(icon: "xmark.circle.fill", color: Color(hex: "#FF3B30")) {
                 haptic(.failure)
-                if match.isLocalSession { match.finishLocalMatch() }
-                else { phone.requestStopFromWatch() }
+                showFinishConfirm = true
             }
         }
     }
@@ -538,6 +543,9 @@ struct PauseOverlay: View {
     @EnvironmentObject var phone: PhoneSessionManager
     var onReset: () -> Void
 
+    @State private var showFinishConfirm = false
+    @State private var showResetConfirm = false
+
     var body: some View {
         ZStack {
             // 毛玻璃模糊背景
@@ -572,7 +580,7 @@ struct PauseOverlay: View {
                                  label: "重设",
                                  color: Color(hex: "#FFD60A")) {
                             haptic(.directionUp)
-                            onReset()
+                            showResetConfirm = true
                         }
                     }
                     // 结束
@@ -580,8 +588,7 @@ struct PauseOverlay: View {
                              label: "结束",
                              color: Color(hex: "#FF3B30")) {
                         haptic(.failure)
-                        if match.isLocalSession { match.finishLocalMatch() }
-                        else { phone.requestStopFromWatch() }
+                        showFinishConfirm = true
                     }
                 }
 
@@ -604,6 +611,17 @@ struct PauseOverlay: View {
                     .buttonStyle(.plain)
                 }
             }
+        }
+        .alert("结束比赛", isPresented: $showFinishConfirm) {
+            Button("结束", role: .destructive) {
+                if match.isLocalSession { match.finishLocalMatch() }
+                else { phone.requestStopFromWatch() }
+            }
+            Button("取消", role: .cancel) {}
+        }
+        .alert("重设比赛", isPresented: $showResetConfirm) {
+            Button("清空重设", role: .destructive) { onReset() }
+            Button("取消", role: .cancel) {}
         }
     }
 
