@@ -24,6 +24,10 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     /// 请求读取心率数据的权限
+    /// ⚠️ 注意：HealthKit 出于隐私设计，**不会告诉调用方"读权限"是否真的获得**。
+    /// 这里返回的 `granted` 只表示"授权弹窗流程没出错"——即使用户点了"不允许"，
+    /// 也会返回 `granted: true`。后续 `queryHeartRate` 在未授权时会静默返回空数组。
+    /// JS 侧不要把 `granted` 当作"能读到数据"的可靠信号。
     @objc func requestAuthorization(_ call: CAPPluginCall) {
         guard HKHealthStore.isHealthDataAvailable() else {
             call.reject("HealthKit not available on this device")
