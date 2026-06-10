@@ -1,0 +1,50 @@
+{
+  "name": "scoreboard",
+  "version": "1.2.13",
+  "description": "运动记分器",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac",
+    "prepare:mobile": "node scripts/prepare-mobile-web.mjs",
+    "android:add": "npx cap add android",
+    "cap:sync": "npm run prepare:mobile && npx cap sync android",
+    "build:dmg": "electron-builder --mac dmg",
+    "assets:android": "npx @capacitor/assets generate --android --assetPath assets --iconBackgroundColor '#0D2F6D' --splashBackgroundColor '#0D2F6D'",
+    "build:apk": "npm run assets:android && npm run cap:sync && cd android && ./gradlew assembleDebug",
+    "build:apk:release": "npm run assets:android && npm run cap:sync && cd android && ./gradlew assembleRelease",
+    "build:aab": "npm run assets:android && npm run cap:sync && cd android && ./gradlew bundleRelease"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.scoreboard.app",
+    "productName": "记分器",
+    "icon": "assets/app-icon.png",
+    "files": [
+      "index.html",
+      "main.js",
+      "manifest.json",
+      "sw.js",
+      "icons/**/*",
+      "themes/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.sports",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/core": "^8.4.0"
+  }
+}

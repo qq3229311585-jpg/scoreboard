@@ -1,0 +1,10 @@
+node_modules/
+dist/
+ios/App/App/public/
+ios/App/DerivedData/
+ios/App/*.xcworkspace/xcuserdata/
+ios/App/Pods/
+android/
+*.asar.bak
+backups/
+.DS_Store
