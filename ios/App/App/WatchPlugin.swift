@@ -26,6 +26,10 @@ public class WatchPlugin: CAPPlugin, CAPBridgedPlugin {
     private var lastActivationState = WCSessionActivationState.notActivated
     private var lastActivationError = ""
 
+    // watchControl 去重：保存本轮比赛已处理的 seq 集合，防止 transferUserInfo 回放重复加分。
+    // 每次新比赛开始（startWorkout）或结束（stopWorkout / watchMatchFinished）时清空。
+    private var processedControlSeqs = Set<Int>()
+
     public override func load() {
         guard WCSession.isSupported() else { return }
         CAPLog.print("[WatchPlugin] load() supported=true")
@@ -51,6 +55,7 @@ public class WatchPlugin: CAPPlugin, CAPBridgedPlugin {
 
     /// 让手表立刻跳入记分页
     @objc func startWorkout(_ call: CAPPluginCall) {
+        processedControlSeqs.removeAll()   // 新比赛开始，清空上局 seq
         let sport      = call.getString("sport")      ?? "badminton"
         let playerName = call.getString("playerName") ?? ""
         sendRealtime(["action": "startWorkout", "sport": sport, "playerName": playerName], call: call)
@@ -58,6 +63,7 @@ public class WatchPlugin: CAPPlugin, CAPBridgedPlugin {
 
     /// 让手表退出记分
     @objc func stopWorkout(_ call: CAPPluginCall) {
+        processedControlSeqs.removeAll()
         sendRealtime(["action": "stopWorkout"], call: call)
     }
 
@@ -225,10 +231,20 @@ extension WatchPlugin: WCSessionDelegate {
         guard let action = msg["action"] as? String else { return }
         switch action {
         case "watchControl":
+            // seq 去重：transferUserInfo 兜底可能导致同一操作被回放多次
+            if let seq = numericId(from: msg["seq"]) {
+                if processedControlSeqs.contains(seq) {
+                    CAPLog.print("[WatchPlugin] duplicate watchControl seq=\(seq), skipping")
+                    return
+                }
+                processedControlSeqs.insert(seq)
+            }
             notifyListeners("watchControl", data: msg)
         case "stopWorkout":
+            processedControlSeqs.removeAll()   // 比赛结束，下一局重新计 seq
             notifyListeners("watchStopRequested", data: msg)
         case "watchMatchFinished":
+            processedControlSeqs.removeAll()
             appendPendingWatchMatch(msg)
             notifyListeners("watchMatchFinished", data: msg)
         default:

@@ -267,6 +267,7 @@ final class WatchMatchManager: ObservableObject {
     }
 
     func applyPhoneStart(sport: String) {
+        phoneSession?.resetControlSeq()
         sessionSource = .phone
         self.sport = sport
         sportLabel = displayName(for: sport)

@@ -9,6 +9,9 @@ class PhoneSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var activationStateLabel = "notActivated"
     @Published var activationError = ""
 
+    // 每次发 watchControl 时递增，iPhone 侧用 seq 做去重，防止 transferUserInfo 回放重复加分
+    private var controlSeq = 0
+
     override init() {
         super.init()
         guard WCSession.isSupported() else { return }
@@ -115,9 +118,15 @@ class PhoneSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         WCSession.default.sendMessage(["bpm": bpm, "ts": ts], replyHandler: nil, errorHandler: nil)
     }
 
+    /// 重置控制消息序号（新比赛开始时调用）
+    func resetControlSeq() {
+        controlSeq = 0
+    }
+
     /// 手表加分 / 暂停等操作通知手机（Layer 1 实时 + Layer 3 兜底）
     func sendControl(_ type: String, delta: Int? = nil, team: Int? = nil) {
-        var msg: [String: Any] = ["action": "watchControl", "type": type]
+        var msg: [String: Any] = ["action": "watchControl", "type": type, "seq": controlSeq]
+        controlSeq += 1
         if let delta { msg["delta"] = delta }
         if let team  { msg["team"]  = team  }
         let session = WCSession.default
