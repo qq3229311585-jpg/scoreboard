@@ -105,6 +105,13 @@ struct MatchSettingsView: View {
         return synced.isEmpty ? defaults : synced
     }
 
+    // B 的可选名单：去掉 A 已经选中的那个
+    private var nameOptionsB: [String] {
+        let all = nameOptions
+        guard selectedA < all.count else { return all }
+        return all.filter { $0 != all[selectedA] }
+    }
+
     @State private var selectedA = 0
     @State private var selectedB = 1
     // 非篮球规则
@@ -141,9 +148,13 @@ struct MatchSettingsView: View {
                         Divider().background(.white.opacity(0.08))
                         pickerRow(
                             label: sport == "basketball" ? "客队" : "蓝方",
-                            options: nameOptions,
+                            options: nameOptionsB,
                             selection: $selectedB
                         )
+                        .onChange(of: selectedA) { _ in
+                            // A 换人后 B 重置到第一个（避免 index 越界或隐式指向旧名字）
+                            selectedB = 0
+                        }
                     }
                 }
 
@@ -172,15 +183,10 @@ struct MatchSettingsView: View {
                 // ── 开始按钮 ──
                 Button {
                     WKInterfaceDevice.current().play(.start)
-                    let names = nameOptions
-                    // 确保 A/B 不同（两人选了同一个名字时自动取下一个）
-                    let effectiveB = selectedB == selectedA
-                        ? (selectedA + 1) % max(1, names.count)
-                        : selectedB
                     match.startLocalMatch(
                         sport: sport,
-                        nameA: names[safe: selectedA] ?? "我方",
-                        nameB: names[safe: effectiveB] ?? "对手",
+                        nameA: nameOptions[safe: selectedA] ?? "我方",
+                        nameB: nameOptionsB[safe: selectedB] ?? "对手",
                         ptWin: sport == "basketball" ? 0 : ptWin,
                         totalSets: sport == "basketball" ? 4 : totalSets
                     )
