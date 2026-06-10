@@ -71,6 +71,11 @@ final class WatchMatchManager: ObservableObject {
     private var matchStartedAtMs: Int = 0
     private var lastEventElapsedMs: Int = 0
 
+    // 用 startDate + 累计暂停时长推算时间，避免息屏 Timer 停走导致计时失真
+    private var matchStartDate: Date?
+    private var pausedAccumulated: TimeInterval = 0
+    private var pausedAt: Date?
+
     var isLocalSession: Bool { sessionSource == .local }
 
     func configure(workoutManager: WorkoutManager, phoneSession: PhoneSessionManager) {
@@ -105,6 +110,9 @@ final class WatchMatchManager: ObservableObject {
         matchEvents.removeAll()
         heartRateTimeline.removeAll()
         matchStartedAtMs = Int(Date().timeIntervalSince1970 * 1000)
+        matchStartDate = Date()
+        pausedAccumulated = 0
+        pausedAt = nil
         lastEventElapsedMs = 0
         isPaused = false
         isMatchActive = true
@@ -136,10 +144,14 @@ final class WatchMatchManager: ObservableObject {
         setScores.removeAll()
         setTimes.removeAll()
         setWins = [0, 0]
+        matchStartDate = nil
+        pausedAccumulated = 0
+        pausedAt = nil
     }
 
     func finishLocalMatch() {
         guard sessionSource == .local else { return }
+        refreshElapsed()
 
         if !supportsMultiPoint {
             // 羽毛球/乒乓球：当前局领先方记为本局胜者
@@ -175,6 +187,9 @@ final class WatchMatchManager: ObservableObject {
         summary = "比赛已结束"
         stopTicker()
         workoutManager?.stop()
+        matchStartDate = nil
+        pausedAccumulated = 0
+        pausedAt = nil
     }
 
     func addPoint(team: Int) {
@@ -183,6 +198,7 @@ final class WatchMatchManager: ObservableObject {
 
     func addScore(team: Int, delta: Int) {
         guard sessionSource == .local, isMatchActive else { return }
+        refreshElapsed()
         pushHistory()
         if team == 0 {
             teamAScore += delta
@@ -203,9 +219,15 @@ final class WatchMatchManager: ObservableObject {
         pushHistory()
         isPaused.toggle()
         if isPaused {
+            refreshElapsed()
+            pausedAt = Date()
             stopTicker()
             summary = "比赛暂停"
         } else {
+            if let pa = pausedAt {
+                pausedAccumulated += Date().timeIntervalSince(pa)
+            }
+            pausedAt = nil
             startTicker()
             updateSummary()
         }
@@ -415,10 +437,26 @@ final class WatchMatchManager: ObservableObject {
         guard ticker == nil else { return }
         ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
-            if !self.isPaused && self.isMatchActive {
+            if self.sessionSource == .local {
+                // 本地比赛：用 startDate 推算，避免息屏 Timer 停走导致少算
+                if !self.isPaused && self.isMatchActive {
+                    self.refreshElapsed()
+                }
+            } else if !self.isPaused && self.isMatchActive {
+                // 手机控制：等手机端 syncMatchState 推快照覆盖，中间靠 +1 撑住显示
                 self.elapsedSeconds += 1
             }
         }
+    }
+
+    /// 用 startDate + 已暂停时长重算 elapsedSeconds，息屏期间也能补回正确时长
+    private func refreshElapsed() {
+        guard let start = matchStartDate else { return }
+        var paused = pausedAccumulated
+        if let pa = pausedAt {
+            paused += Date().timeIntervalSince(pa)
+        }
+        elapsedSeconds = max(0, Int(Date().timeIntervalSince(start) - paused))
     }
 
     private func stopTicker() {
