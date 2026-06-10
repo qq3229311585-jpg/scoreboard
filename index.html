@@ -229,9 +229,9 @@
       gap: 14px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.06);
     }
     .settings-row:last-child { border-bottom: none; }
-    .settings-copy { display: flex; flex-direction: column; gap: 3px; }
+    .settings-copy { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
     .settings-title { font-size: 15px; color: rgba(255,255,255,.82); }
-    .settings-desc { font-size: 12px; color: rgba(255,255,255,.35); }
+    .settings-desc { font-size: 12px; color: rgba(255,255,255,.35); line-height: 1.45; }
     .toggle-btn {
       position: relative;
       border: none; width: 62px; height: 30px; padding: 0; border-radius: 999px;
@@ -252,16 +252,17 @@
     .toggle-btn:active::after { width: 27px; }
     .toggle-btn.on:active::after { transform: translateX(29px); }
     .option-row {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 14px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.06);
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.06);
     }
     .option-row[hidden] { display: none; }
-    .choice-group { display: flex; align-items: center; gap: 8px; }
+    .choice-group { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; justify-content: flex-end; max-width: 200px; }
     .choice-btn {
-      border: none; border-radius: 999px; padding: 7px 12px;
+      border: none; border-radius: 999px; padding: 6px 11px;
       background: rgba(255,255,255,.08); color: rgba(255,255,255,.55);
       font-size: 12px; font-weight: 700; letter-spacing: .2px; cursor: pointer;
       transition: background .15s ease, color .15s ease, transform .12s ease;
+      white-space: nowrap;
     }
     .choice-btn.active { background: rgba(47,140,255,.22); color: #D9EBFF; }
     .choice-btn:active { transform: scale(.94); }
@@ -339,6 +340,23 @@
       display: flex; align-items: center; gap: 4px;
     }
     .back-btn:active { opacity: .6; }
+    .back-bar-title { font-size:15px; font-weight:600; margin-left:12px; opacity:.8; }
+    /* ── 个人中心 ── */
+    .profile-item { display:flex; align-items:center; gap:14px; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.06); cursor:pointer; transition:background .12s; }
+    .profile-item:last-child { border-bottom:none; }
+    .profile-item:active { background:rgba(255,255,255,.04); }
+    .profile-item.pf-active { background:rgba(var(--accent-rgb,10,132,255),.08); }
+    .profile-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; color:#fff; flex-shrink:0; }
+    .profile-info { flex:1; min-width:0; }
+    .profile-name-row { font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; }
+    .profile-active-tag { font-size:10px; font-weight:600; color:var(--accent,#0A84FF); background:rgba(10,132,255,.15); padding:2px 7px; border-radius:10px; }
+    .profile-sub { font-size:12px; color:rgba(255,255,255,.38); margin-top:3px; }
+    .profile-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .profile-del-btn { border:none; background:rgba(255,59,48,.15); color:rgba(255,59,48,.8); border-radius:8px; padding:6px 10px; font-size:12px; font-weight:600; cursor:pointer; }
+    .profile-del-btn:active { opacity:.6; }
+    .profile-del-checkbox { width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,.25); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; transition:all .15s; }
+    .profile-del-checkbox.checked { background:rgba(255,59,48,.85); border-color:rgba(255,59,48,.85); color:#fff; }
+    .profile-item.pf-del-selected { background:rgba(255,59,48,.07); }
     #setupControls {
       flex: 1; background: var(--bg); overflow-y: auto;
       padding: 8px 18px 28px; display: flex; flex-direction: column; gap: 11px;
@@ -362,10 +380,10 @@
     .team-dot.b { background: var(--clr-b); }
     .team-label { font-size: 15px; color: rgba(255,255,255,.8); min-width: 44px; }
     .team-input {
-      flex: 1; background: none; border: none; outline: none;
+      flex: 1; min-width: 0; background: none; border: none; outline: none;
       color: #fff; font-size: 15px; font-weight: 600;
       text-align: right; caret-color: #fff;
-      user-select: text; padding-right: 4px;
+      user-select: text; padding-right: 2px;
     }
     .team-input::placeholder { color: rgba(255,255,255,.2); font-weight: 400; }
     #sportSeg {
@@ -439,7 +457,7 @@
       min-height: 0;
       /* 上下留出状态栏 / 导航栏空间 */
       padding: calc(var(--safe-top) + clamp(28px, 5vh, 60px)) 0
-               calc(var(--safe-bottom) + clamp(62px, 10vh, 112px));
+               calc(var(--safe-bottom) + clamp(28px, 5vh, 60px));
     }
     .panel:active { filter: brightness(.84); }
 
@@ -465,12 +483,11 @@
     .serve-pip.on { opacity: 1; }
     .p-name { font-size: clamp(14px, 2.4vh, 20px); font-weight: 700; letter-spacing: .4px; opacity: .7; }
     .p-score {
-      font-size: min(40vw, 24vh, 210px);
+      font-size: min(36vw, 24vh, 210px);
       font-weight: 800;
       line-height: .9;
       letter-spacing: -4px;
       margin-top: 2px;
-      font-variant-numeric: tabular-nums;
     }
     .p-sub { min-height: 24px; font-size: clamp(15px, 2.8vh, 25px); font-weight: 700; opacity: .6; margin-top: 6px; }
     .p-sets { margin-top: 10px; font-size: 11px; letter-spacing: 4px; opacity: .4; min-height: 14px; }
@@ -499,6 +516,14 @@
       padding: 4px 10px; border-radius: 20px;
       pointer-events: none; white-space: nowrap; z-index: 10;
     }
+    #hrBadge {
+      position: fixed; top: calc(var(--safe-top) + 10px); right: 14px;
+      background: rgba(0,0,0,.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      color: rgba(255,255,255,.75); font-size: 11px; font-weight: 700; letter-spacing: .3px;
+      padding: 4px 9px; border-radius: 20px;
+      pointer-events: none; white-space: nowrap; z-index: 10;
+    }
+    #hrBadge { color: rgba(255,100,100,.9); }
     #menuBtn {
       position: fixed; bottom: calc(var(--safe-bottom) + 16px); left: 50%; transform: translateX(-50%); z-index: 20;
       min-width: 68px; height: 40px; border-radius: 999px; border: none;
@@ -662,7 +687,13 @@
     .d-section { margin-bottom: 24px; }
     .d-section-title { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.35); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
     .d-card { background: rgba(255,255,255,.05); border-radius: 14px; overflow: hidden; }
-    .detail-delete-wrap { padding-top: 6px; }
+    .detail-delete-wrap { padding-top: 6px; display: flex; flex-direction: column; gap: 8px; }
+    .detail-export-btn {
+      width: 100%; border: none; border-radius: 14px;
+      padding: 14px 16px; background: rgba(255,255,255,.08); color: rgba(255,255,255,.75);
+      font-size: 15px; font-weight: 600; cursor: pointer; transition: background .15s ease;
+    }
+    .detail-export-btn:active { background: rgba(255,255,255,.14); }
     .detail-delete-btn {
       width: 100%; border: none; border-radius: 14px;
       padding: 14px 16px; background: rgba(201,59,49,.16); color: #FF8B80;
@@ -789,6 +820,10 @@
     /* 平台专属设置行 */
     html[data-platform="desktop"] .android-only { display: none; }
     html[data-platform="android"]  .desktop-only { display: none; }
+    /* 桌面端隐藏个人中心 */
+    html[data-platform="desktop"] #homeProfileBtn { display: none; }
+    html[data-platform="desktop"] #profileScreen  { display: none !important; }
+    html[data-platform="desktop"] #personScreen   { display: none !important; }
     html[data-platform="android"] .back-bar {
       min-height: 44px;
       padding: 0 16px 8px;
@@ -875,8 +910,8 @@
         min-width: 0;
       }
       html[data-platform="android"] .panel {
-        padding-top: calc(var(--safe-top) + clamp(16px, 3vh, 36px));
-        padding-bottom: calc(var(--safe-bottom) + clamp(48px, 8vh, 80px));
+        padding-top: calc(var(--safe-top) + clamp(36px, 6vh, 60px));
+        padding-bottom: calc(var(--safe-bottom) + clamp(36px, 6vh, 60px));
       }
       html[data-platform="android"] #arena {
         align-items: stretch;
@@ -996,7 +1031,7 @@
 
     /* ── 数据管理（设置页）── */
     #dataManageCard { margin-top:8px; }
-    html[data-platform="android"] #dataManageCard { display:none; }
+    html[data-nativePlatform="android"] #dataManageCard { display:none; }
     .import-label { display:inline-block; cursor:pointer; }
     .import-label input[type=file] { display:none; }
     .import-file-btn {
@@ -1018,8 +1053,8 @@
     .matchup-name{font-size:16px;font-weight:700;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .matchup-vs{font-size:11px;color:rgba(255,255,255,.3);flex-shrink:0;padding:0 2px}
     .matchup-record{display:flex;align-items:center;gap:0;margin-bottom:8px}
-    .matchup-wins-a{font-size:17px;font-weight:800;color:#E07060;flex:1;text-align:left}
-    .matchup-wins-b{font-size:17px;font-weight:800;color:#6090B8;flex:1;text-align:right}
+    .matchup-wins-a{font-size:17px;font-weight:800;color:var(--line-a,#E07060);flex:1;text-align:left}
+    .matchup-wins-b{font-size:17px;font-weight:800;color:var(--line-b,#6090B8);flex:1;text-align:right}
     .matchup-total{flex:0;font-size:12px;color:rgba(255,255,255,.3);text-align:center;min-width:52px}
     .matchup-meta{font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px}
     .matchup-log{display:flex;flex-direction:column;gap:5px;border-top:1px solid rgba(255,255,255,.07);padding-top:9px}
@@ -1081,10 +1116,10 @@
     .ov-export-btn:active{background:rgba(255,255,255,.14);}
 
     /* ── 全场走势图 ── */
-    .prog-line-a{stroke:var(--clr-a,#D95F4B)}
-    .prog-line-b{stroke:var(--clr-b,#4A7FA8)}
-    .prog-fill-a{fill:var(--clr-a,#D95F4B);fill-opacity:.18}
-    .prog-fill-b{fill:var(--clr-b,#4A7FA8);fill-opacity:.14}
+    .prog-line-a{stroke:var(--line-a,var(--clr-a,#D95F4B))}
+    .prog-line-b{stroke:var(--line-b,var(--clr-b,#4A7FA8))}
+    .prog-fill-a{fill:var(--line-a,var(--clr-a,#D95F4B));fill-opacity:.18}
+    .prog-fill-b{fill:var(--line-b,var(--clr-b,#4A7FA8));fill-opacity:.14}
 
     /* ── 分段得分 ── */
     .phase-set-title{font-size:11px;color:rgba(255,255,255,.3);padding:10px 0 4px;border-top:1px solid rgba(255,255,255,.06)}
@@ -1094,7 +1129,7 @@
     .phase-lbl{width:26px;font-size:11px;color:rgba(255,255,255,.4);flex-shrink:0}
     .phase-bar-outer{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;display:flex}
     .phase-score{font-size:12px;min-width:38px;text-align:right;flex-shrink:0}
-    .phase-score .sa{color:#E07060}.phase-score .sb{color:#6090B8}
+    .phase-score .sa{color:var(--line-a,#E07060)}.phase-score .sb{color:var(--line-b,#6090B8)}
 
     /* ── 关键球 ── */
     .crit-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.05)}
@@ -1102,7 +1137,7 @@
     .crit-lbl{width:46px;font-size:11px;color:rgba(255,255,255,.4);flex-shrink:0}
     .crit-bar-outer{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;display:flex}
     .crit-score{font-size:12px;min-width:38px;text-align:right;flex-shrink:0}
-    .crit-score .sa{color:#E07060}.crit-score .sb{color:#6090B8}
+    .crit-score .sa{color:var(--line-a,#E07060)}.crit-score .sb{color:var(--line-b,#6090B8)}
     .crit-summary{font-size:12px;color:rgba(255,255,255,.35);margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06);line-height:1.7}
 
     /* ── 节奏分析 ── */
@@ -1115,6 +1150,28 @@
     .pace-set-bar-outer{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
     .pace-set-bar-inner{height:100%;border-radius:3px;background:rgba(255,255,255,.28)}
     .pace-set-val{font-size:11px;color:rgba(255,255,255,.4);width:42px;text-align:right;flex-shrink:0}
+
+    /* ── 洞察卡片 ── */
+    .insight-card{background:rgba(255,255,255,.06);border-radius:14px;padding:14px 16px;margin-bottom:24px}
+    .insight-title{font-size:10px;font-weight:700;color:rgba(255,255,255,.32);letter-spacing:1.6px;text-transform:uppercase;margin-bottom:9px}
+    .insight-sentences p{font-size:14px;color:rgba(255,255,255,.75);line-height:1.7;margin:0 0 7px 0}
+    .insight-sentences p:last-child{margin-bottom:0}
+    .insight-hr-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+    .insight-hr-badge{font-size:11px;font-weight:600;color:rgba(52,199,89,.9);letter-spacing:.3px}
+    .insight-hr-stat{font-size:11px;color:rgba(255,255,255,.45)}
+    .insight-hr-stat b{color:rgba(52,199,89,.85);font-weight:600}
+
+    /* ── 可折叠区块 ── */
+    .collapse-toggle{width:100%;background:rgba(255,255,255,.05);border:none;border-radius:14px;padding:13px 16px;
+      display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+      color:rgba(255,255,255,.45);font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+      transition:background .15s}
+    .collapse-toggle:active{background:rgba(255,255,255,.09)}
+    .collapse-caret{font-size:10px;transition:transform .22s;display:inline-block;opacity:.5}
+    .collapse-toggle.open .collapse-caret{transform:rotate(180deg)}
+    .collapse-body{overflow:hidden;max-height:0;transition:max-height .35s ease}
+    .collapse-body.open{max-height:99999px}
+    .collapse-inner{padding-top:16px}
 
     /* ══════════════════════════════
        白天模式 (data-colormode="light")
@@ -1251,6 +1308,15 @@
     html[data-colormode="light"] .pace-set-bar-outer { background:rgba(0,0,0,.07); }
     html[data-colormode="light"] .pace-set-bar-inner { background:rgba(0,0,0,.28); }
     html[data-colormode="light"] .pace-set-val { color:rgba(0,0,0,.4); }
+    /* 洞察卡片 */
+    html[data-colormode="light"] .insight-card { background:rgba(0,0,0,.04); }
+    html[data-colormode="light"] .insight-title { color:rgba(0,0,0,.3); }
+    html[data-colormode="light"] .insight-sentences p { color:rgba(0,0,0,.72); }
+    html[data-colormode="light"] .insight-hr-row { border-top-color:rgba(0,0,0,.1); }
+    html[data-colormode="light"] .insight-hr-stat { color:rgba(0,0,0,.45); }
+    /* 可折叠 */
+    html[data-colormode="light"] .collapse-toggle { background:rgba(0,0,0,.04); color:rgba(0,0,0,.45); }
+    html[data-colormode="light"] .collapse-toggle:active { background:rgba(0,0,0,.08); }
     /* 各阶段得分 (phase) */
     html[data-colormode="light"] .phase-set-title { color:rgba(0,0,0,.3); border-top-color:rgba(0,0,0,.06); }
     html[data-colormode="light"] .phase-row { border-top-color:rgba(0,0,0,.05); }
@@ -1299,6 +1365,7 @@
   <div id="homeSub">Sport Scoreboard</div>
   <button class="home-btn primary" onclick="navTo('setup')">新比赛</button>
   <button class="home-btn ghost"   onclick="navTo('history')">历史记录</button>
+  <button class="home-btn ghost"   onclick="navTo('profile')" id="homeProfileBtn">个人中心</button>
   <button id="homeSettingsBtn" onclick="navTo('settings')"><span class="home-settings-ico">⚙</span><span class="home-settings-label">设置</span></button>
 </div>
 
@@ -1365,6 +1432,7 @@
 ══════════════════════════════ -->
 <div class="screen out" id="gameScreen">
   <div id="statusPill"></div>
+  <div id="hrBadge" style="display:none">♥ <span id="hrBadgeVal">--</span></div>
   <div id="arena">
     <div class="panel" id="panelA" onclick="addPt(0)">
       <div class="p-name"  id="nameA">队伍 A</div>
@@ -1417,6 +1485,50 @@
 <!-- ══════════════════════════════
      设置页（占位）
 ══════════════════════════════ -->
+<!-- ══════════════════════════════
+     个人中心
+══════════════════════════════ -->
+<div class="screen out" id="profileScreen">
+  <div class="back-bar" style="justify-content:space-between">
+    <button class="back-btn" onclick="navTo('home')">‹ 返回</button>
+    <span class="back-bar-title" style="margin-left:0">个人中心</span>
+    <button class="back-btn" id="profileEditBtn" onclick="toggleProfileEditMode()" style="opacity:.7">管理</button>
+  </div>
+  <div class="settings-scroll">
+    <div id="profileList"></div>
+    <!-- 删除模式确认栏 -->
+    <div id="profileDeleteBar" style="display:none;padding:10px 16px">
+      <button onclick="confirmDeleteProfiles()"
+        style="width:100%;padding:13px;border:none;border-radius:14px;background:rgba(255,59,48,.85);color:#fff;font-size:15px;font-weight:600;cursor:pointer">
+        删除所选使用者
+      </button>
+    </div>
+    <!-- 添加新用户 -->
+    <div class="settings-card" style="margin-top:8px" id="profileAddCard">
+      <div class="settings-row" style="gap:10px;flex-wrap:nowrap">
+        <input class="team-input" id="newProfileName" placeholder="输入名字，添加使用者" maxlength="12"
+               style="flex:1;margin:0" onkeydown="if(event.key==='Enter')submitAddProfile()">
+        <button class="step-btn" style="width:44px;height:44px;border-radius:12px;font-size:22px;flex-shrink:0"
+                onclick="submitAddProfile()">＋</button>
+      </div>
+    </div>
+    <!-- 底部说明 -->
+    <div style="padding:14px 16px 8px;font-size:12px;color:rgba(255,255,255,.28);line-height:1.65">
+      心率记录开启后，比赛结束时会自动从 Apple Watch 读取对应时段的心率数据用于复盘分析。
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     个人页面
+══════════════════════════════ -->
+<div class="screen out" id="personScreen">
+  <div class="back-bar">
+    <button class="back-btn" onclick="navTo('profile')">‹ 个人中心</button>
+  </div>
+  <div class="settings-scroll" id="personBody"></div>
+</div>
+
 <div class="screen out" id="settingsScreen">
   <div class="back-bar">
     <button class="back-btn" onclick="navTo('home')">‹ 返回</button>
@@ -1446,28 +1558,28 @@
       <div class="settings-row">
         <div class="settings-copy">
           <div class="settings-title">双击防误触</div>
-          <div class="settings-desc">开启后，连续点击两下才会成功加分</div>
+          <div class="settings-desc">连按两下才计一分</div>
         </div>
         <button class="toggle-btn" id="antiMistouchBtn" onclick="toggleAntiMistouch()">关闭</button>
       </div>
       <div class="settings-row android-only">
         <div class="settings-copy">
           <div class="settings-title">显示返回按钮</div>
-          <div class="settings-desc">为没有侧滑返回的手机保留一个明确入口</div>
+          <div class="settings-desc">没有侧滑返回时使用</div>
         </div>
         <button class="toggle-btn" id="backButtonToggleBtn" onclick="toggleBackButtonVisibility()">关闭</button>
       </div>
       <div class="settings-row">
         <div class="settings-copy">
           <div class="settings-title">记分振动</div>
-          <div class="settings-desc">成功记分时给一个很轻的确认反馈</div>
+          <div class="settings-desc">记分时轻触感反馈</div>
         </div>
         <button class="toggle-btn" id="scoreVibrateBtn" onclick="toggleScoreVibrate()">关闭</button>
       </div>
       <div class="settings-row">
         <div class="settings-copy">
           <div class="settings-title">记分音效</div>
-          <div class="settings-desc">默认关闭，只在成功记分和分局结束时播放</div>
+          <div class="settings-desc">记分和分局结束时播放</div>
         </div>
         <button class="toggle-btn" id="scoreSoundBtn" onclick="toggleScoreSound()">关闭</button>
       </div>
@@ -1479,10 +1591,13 @@
         <div class="choice-group" id="soundTypeGroup">
           <button class="choice-btn" data-sound-type="chime" onclick="setScoreSoundType('chime')">清脆</button>
           <button class="choice-btn" data-sound-type="pulse" onclick="setScoreSoundType('pulse')">电子</button>
+          <button class="choice-btn" data-sound-type="marimba" onclick="setScoreSoundType('marimba')">木琴</button>
+          <button class="choice-btn" data-sound-type="whistle" onclick="setScoreSoundType('whistle')">哨声</button>
+          <button class="choice-btn" data-sound-type="crystal" onclick="setScoreSoundType('crystal')">水晶</button>
         </div>
       </div>
     </div>
-    <!-- 数据管理（仅桌面端显示导入） -->
+    <!-- 数据管理 -->
     <div class="settings-card" id="dataManageCard">
       <div class="settings-row">
         <div class="settings-copy">
@@ -1493,6 +1608,15 @@
           <input type="file" accept=".json" onchange="importHistory(event)">
           <span class="import-file-btn">选择文件</span>
         </label>
+      </div>
+    </div>
+    <div class="settings-card" style="margin-top:8px">
+      <div class="settings-row" style="cursor:pointer" onclick="exportForMacSync()">
+        <div class="settings-copy">
+          <div class="settings-title">同步到 Mac</div>
+          <div class="settings-desc">导出完整数据（含心率），可导入 Mac 版记分器</div>
+        </div>
+        <span style="color:rgba(255,255,255,.3);font-size:20px">›</span>
       </div>
     </div>
     <!-- 运动项目 -->
@@ -1550,6 +1674,19 @@ const APP_PLATFORM = (() => {
   if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) return 'ios';
   return 'desktop';
 })();
+const registerNativePlugin = name => {
+  const cap = window.Capacitor;
+  if (cap && typeof cap.registerPlugin === 'function') {
+    return cap.registerPlugin(name);
+  }
+  if (cap && cap.Plugins && cap.Plugins[name]) {
+    return cap.Plugins[name];
+  }
+  return globalThis[name];
+};
+const WatchPlugin = registerNativePlugin('WatchPlugin');
+const HealthKitPlugin = registerNativePlugin('HealthKitPlugin');
+
 document.documentElement.dataset.platform = APP_PLATFORM === 'ios' ? 'android' : APP_PLATFORM;
 document.documentElement.dataset.nativePlatform = APP_PLATFORM;
 
@@ -1589,7 +1726,7 @@ if (APP_PLATFORM === 'android' || APP_PLATFORM === 'ios') {
 // ══════════════════════════════════════════
 // 导航
 // ══════════════════════════════════════════
-const SCREENS = { home:'homeScreen', setup:'setupScreen', game:'gameScreen', history:'historyScreen', detail:'detailScreen', settings:'settingsScreen' };
+const SCREENS = { home:'homeScreen', setup:'setupScreen', game:'gameScreen', history:'historyScreen', detail:'detailScreen', settings:'settingsScreen', profile:'profileScreen', person:'personScreen' };
 let currentScreen = 'home';
 // 应用内导航栈（安卓返回键支持，不依赖 browser history）
 const navStack = [];
@@ -1607,6 +1744,8 @@ function navTo(name, dir) {
   // 特定页面的初始化
   if (name === 'history') renderHistoryList();
   if (name === 'settings') { renderThemeGrid(); renderColorModeToggle(); renderAntiMistouch(); renderBackButtonToggle(); renderFeedbackSettings(); }
+  if (name === 'profile') { profileEditMode=false; renderProfileScreen(); }
+  if (name === 'person') renderPersonScreen(currentPersonId);
 
   // 前进时把当前页入栈；后退时不入栈（由调用方 pop 出来）
   if (goForward) navStack.push(currentScreen);
@@ -1867,47 +2006,88 @@ function playScoreSound(kind='score'){
   const at=ctx.currentTime+0.01;
   if(scoreSoundType==='pulse'){
     if(kind==='set'){
-      pulseOsc(ctx, at, {type:'square', from:720, to:520, gain:0.022, dur:0.06});
-      pulseOsc(ctx, at+0.09, {type:'square', from:980, to:720, gain:0.02, dur:0.07});
+      pulseOsc(ctx, at,      {type:'square',   from:720,  to:520,  gain:0.022, dur:0.06});
+      pulseOsc(ctx, at+0.09, {type:'square',   from:980,  to:720,  gain:0.02,  dur:0.07});
     }else{
-      pulseOsc(ctx, at, {type:'square', from:940, to:680, gain:0.018, dur:0.05});
+      pulseOsc(ctx, at,      {type:'square',   from:940,  to:680,  gain:0.018, dur:0.05});
     }
     return;
   }
-  if(kind==='set'){
-    pulseOsc(ctx, at, {type:'triangle', from:740, to:980, gain:0.022, dur:0.07});
-    pulseOsc(ctx, at+0.08, {type:'sine', from:980, to:1280, gain:0.018, dur:0.1});
+  if(scoreSoundType==='marimba'){
+    // 温润木琴：低泛音 + 基音同时发声，自然木质感
+    if(kind==='set'){
+      pulseOsc(ctx, at,      {type:'sine',     from:523,  to:523,  gain:0.032, dur:0.18});
+      pulseOsc(ctx, at,      {type:'sine',     from:1046, to:1046, gain:0.016, dur:0.10});
+      pulseOsc(ctx, at+0.12, {type:'sine',     from:659,  to:659,  gain:0.028, dur:0.18});
+      pulseOsc(ctx, at+0.12, {type:'sine',     from:1318, to:1318, gain:0.014, dur:0.10});
+    }else{
+      pulseOsc(ctx, at,      {type:'sine',     from:659,  to:659,  gain:0.030, dur:0.14});
+      pulseOsc(ctx, at,      {type:'sine',     from:1318, to:1318, gain:0.015, dur:0.08});
+    }
     return;
   }
-  pulseOsc(ctx, at, {type:'triangle', from:1040, to:1320, gain:0.02, dur:0.055});
+  if(scoreSoundType==='whistle'){
+    // 短促哨音：正弦快速上扫，运动感
+    if(kind==='set'){
+      pulseOsc(ctx, at,      {type:'sine',     from:900,  to:1200, gain:0.028, dur:0.09});
+      pulseOsc(ctx, at+0.11, {type:'sine',     from:900,  to:1350, gain:0.025, dur:0.11});
+    }else{
+      pulseOsc(ctx, at,      {type:'sine',     from:880,  to:1100, gain:0.026, dur:0.08});
+    }
+    return;
+  }
+  if(scoreSoundType==='crystal'){
+    // 水晶铃：高频正弦叠加泛音，通透悠远
+    if(kind==='set'){
+      pulseOsc(ctx, at,      {type:'sine',     from:1568, to:1568, gain:0.020, dur:0.22});
+      pulseOsc(ctx, at,      {type:'sine',     from:2093, to:2093, gain:0.012, dur:0.16});
+      pulseOsc(ctx, at+0.14, {type:'sine',     from:1865, to:1865, gain:0.018, dur:0.22});
+      pulseOsc(ctx, at+0.14, {type:'sine',     from:2489, to:2489, gain:0.010, dur:0.16});
+    }else{
+      pulseOsc(ctx, at,      {type:'sine',     from:1760, to:1760, gain:0.022, dur:0.16});
+      pulseOsc(ctx, at,      {type:'sine',     from:2349, to:2349, gain:0.012, dur:0.10});
+    }
+    return;
+  }
+  // chime（默认）
+  if(kind==='set'){
+    pulseOsc(ctx, at,      {type:'triangle', from:740,  to:980,  gain:0.022, dur:0.07});
+    pulseOsc(ctx, at+0.08, {type:'sine',     from:980,  to:1280, gain:0.018, dur:0.1});
+    return;
+  }
+  pulseOsc(ctx, at,        {type:'triangle', from:1040, to:1320, gain:0.02,  dur:0.055});
 }
-function playScoreVibration(kind='score'){
+let _hapticBusy = false;
+async function playScoreVibration(kind='score'){
   if(!scoreVibrate) return;
-  // 优先走 Capacitor 原生 Haptics；iPhone 上不要退回到无效的 navigator.vibrate
+  if(_hapticBusy) return;           // 上一次震动未完成，跳过避免队列积压
+  _hapticBusy = true;
   try {
     const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
     if (H) {
       if (kind === 'set') {
         if (typeof H.notification === 'function') {
-          H.notification({ type: 'SUCCESS' });
+          await H.notification({ type: 'SUCCESS' }).catch(()=>{});
           if (typeof H.impact === 'function') {
-            setTimeout(() => H.impact({ style: 'HEAVY' }), 70);
+            await new Promise(r => setTimeout(r, 70));
+            await H.impact({ style: 'HEAVY' }).catch(()=>{});
           }
         } else if (typeof H.vibrate === 'function') {
-          H.vibrate({ duration: 160 });
+          await H.vibrate({ duration: 160 }).catch(()=>{});
         }
       } else {
         if (typeof H.impact === 'function') {
-          H.impact({ style: 'MEDIUM' });
+          await H.impact({ style: 'MEDIUM' }).catch(()=>{});
         } else if (typeof H.selectionChanged === 'function') {
-          H.selectionChanged();
+          await H.selectionChanged().catch(()=>{});
         } else if (typeof H.vibrate === 'function') {
-          H.vibrate({ duration: 90 });
+          await H.vibrate({ duration: 90 }).catch(()=>{});
         }
       }
       return;
     }
   } catch(e) {}
+  finally { _hapticBusy = false; }
   // 备用：Web Vibration API
   if (navigator.vibrate) {
     navigator.vibrate(kind === 'set' ? [120, 60, 160] : 90);
@@ -2034,14 +2214,24 @@ function installEdgeSwipeBack(){
   document.addEventListener('touchcancel', resetEdgeSwipe, { passive: true });
 }
 
-function startGame() {
+async function startGame() {
   CFG.names=[
     document.getElementById('inputA').value.trim()||'队伍 A',
     document.getElementById('inputB').value.trim()||'队伍 B',
   ];
+  rememberWatchNames(CFG.names);
+  syncProfilesToWatch();
+  const shouldUseWatch = await shouldRecordHeartRateForCurrentMatch();
+  if (shouldUseWatch) {
+    const ready = await ensureWatchReadyForMatch();
+    if (!ready) return;
+  }
   clearPendingScore(false);
   S=mkState(); H=[]; render();
   navTo('game');
+  if (shouldUseWatch) {
+    await startWatchWorkout(); // 通知 Apple Watch 开始记录心率
+  }
 }
 
 // ══════════════════════════════════════════
@@ -2190,6 +2380,8 @@ function render() {
     }
   }
   if(S&&S.winner!==null)showWin();
+  syncPausedState();
+  syncWatchMatchState();
 }
 function renderRally(){
   setNum(0,S.pts[0]);setNum(1,S.pts[1]);setSub(0,'');setSub(1,'');
@@ -2278,6 +2470,7 @@ function toggleClock(){
   if(S.pausedAt) resumeClock();
   else pauseClock();
   renderMenuButton();
+  syncWatchMatchState(true);
 }
 function updateClockActionLabel(){
   const el=document.getElementById('clockActionLabel');
@@ -2350,6 +2543,20 @@ function finalizeCurrentMatch(winner){
   render();
 }
 
+// 历史最多保存 100 条，超过会从尾部丢弃旧记录。接近上限时提醒用户导出/同步到 Mac。
+function maybeWarnHistoryNearLimit(count){
+  try{
+    const lastWarn = Number(localStorage.getItem('sb_history_warn_ts')||0);
+    if(Date.now() - lastWarn < 24*60*60*1000) return; // 24h 内只提醒一次
+    localStorage.setItem('sb_history_warn_ts', String(Date.now()));
+    const remaining = Math.max(0, 100 - count);
+    const msg = remaining === 0
+      ? '历史记录已达 100 条上限，再保存新比赛会覆盖最旧的记录。建议先导出或同步到 Mac。'
+      : `历史记录接近上限（${count}/100），仅剩 ${remaining} 条空位。建议尽快导出或同步到 Mac。`;
+    setTimeout(()=>alert(msg), 400);
+  }catch(_){}
+}
+
 function saveMatch(){
   if(!S||S.winner===null||S._saved)return;
   if(CFG.sport==='basketball') ensureBasketballSetData();
@@ -2366,14 +2573,700 @@ function saveMatch(){
     setTimes: S.setTimes||[],
     winner: S.winner,
     duration: getElapsedMs(),
+    heartRateTimeline: liveHRTimeline.length ? [...liveHRTimeline] : [],
+    hrPlayerIdx: null,
+    hrProfileId: null,
   };
+  rememberWatchNames(record.names||[]);
+  // 活跃档案与球员名匹配 → 确定心率归属
+  const _ap=getActiveProfile();
+  if(_ap && _ap.hrEnabled){
+    const _pidx=CFG.names.findIndex(n=>n===_ap.name);
+    record.hrPlayerIdx=_pidx>=0?_pidx:0; // 找不到名字时默认归 0 号球员（持机方）
+    record.hrProfileId=_ap.id;
+  }
+  stopWatchWorkout(); // 通知手表停止运动，保存数据到健身 App
+  liveHRTimeline = [];
+  updateLiveHRDisplay(0); // 隐藏心率徽章
   try{
     const all=JSON.parse(localStorage.getItem('sb_history')||'[]');
     all.unshift(record);
+    if(all.length>=95 && all.length<=100) maybeWarnHistoryNearLimit(all.length);
     if(all.length>100)all.length=100;
     localStorage.setItem('sb_history',JSON.stringify(all));
     S._saved=true; // 移到存档成功后再标记，防止报错时锁死
+    // 异步拉取 HealthKit 心率作为兜底（Watch 直流时已有数据可跳过）
+    const _matchId=record.id;
+    const _startMs=S.startTime||Date.now()-getElapsedMs();
+    const _endMs=Date.now();
+    if(!record.heartRateTimeline.length) setTimeout(()=>fetchAndStoreHeartRate(_matchId,_startMs,_endMs),300);
   }catch(e){}
+}
+
+// ══════════════════════════════════════════
+// 个人档案
+// ══════════════════════════════════════════
+const PROFILE_COLORS=['#4A90D9','#D95F4B','#34C759','#FF9500','#AF52DE','#FF2D55','#5AC8FA','#FFCC00'];
+const WATCH_NAME_POOL_KEY = 'sb_watch_name_pool_v1';
+
+let profiles=[];
+let activeProfileId=null;
+
+function normalizeWatchName(name){
+  return String(name||'').trim().slice(0,12);
+}
+
+function readWatchNamePool(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(WATCH_NAME_POOL_KEY)||'[]');
+    return Array.isArray(raw)?raw.map(normalizeWatchName).filter(Boolean):[];
+  }catch(e){ return []; }
+}
+
+function writeWatchNamePool(names){
+  const merged=[];
+  names.map(normalizeWatchName).filter(Boolean).forEach(name=>{
+    if(!merged.includes(name)) merged.push(name);
+  });
+  localStorage.setItem(WATCH_NAME_POOL_KEY,JSON.stringify(merged.slice(0,60)));
+}
+
+function rememberWatchNames(names){
+  writeWatchNamePool([...(Array.isArray(names)?names:[]),...readWatchNamePool()]);
+}
+
+function getKnownWatchNames(){
+  const merged=[];
+  const push=name=>{
+    const normalized=normalizeWatchName(name);
+    if(normalized&&!merged.includes(normalized)) merged.push(normalized);
+  };
+  try{
+    const allHistory=JSON.parse(localStorage.getItem('sb_history')||'[]');
+    if(Array.isArray(allHistory)){
+      allHistory.forEach(record=>{
+        if(Array.isArray(record?.names)) record.names.forEach(push);
+      });
+    }
+  }catch(e){}
+  return merged.slice(0,60);
+}
+
+function cacheCurrentSetupNames(){
+  const names=[
+    document.getElementById('inputA')?.value,
+    document.getElementById('inputB')?.value,
+  ].map(normalizeWatchName).filter(Boolean);
+  if(!names.length) return;
+  rememberWatchNames(names);
+  syncProfilesToWatch();
+}
+
+function loadProfiles(){
+  try{ profiles=JSON.parse(localStorage.getItem('sb_profiles')||'[]'); }catch(e){ profiles=[]; }
+  activeProfileId=parseInt(localStorage.getItem('sb_active_profile'))||null;
+  if(profiles.length&&!profiles.find(p=>p.id===activeProfileId)){
+    activeProfileId=profiles[0].id;
+    localStorage.setItem('sb_active_profile',activeProfileId);
+  }
+}
+
+function saveProfilesToStorage(){
+  localStorage.setItem('sb_profiles',JSON.stringify(profiles));
+  if(activeProfileId) localStorage.setItem('sb_active_profile',activeProfileId);
+  else localStorage.removeItem('sb_active_profile');
+  // 把档案名同步到 Apple Watch，让手表设置页可以选择球员名字
+  syncProfilesToWatch();
+}
+
+async function syncProfilesToWatch() {
+  if (typeof WatchPlugin === 'undefined') return;
+  try {
+    const names = getKnownWatchNames();
+    await WatchPlugin.syncProfiles({ names });
+  } catch(e) { /* 手表不在线时静默失败 */ }
+}
+
+function getActiveProfile(){
+  return profiles.find(p=>p.id===activeProfileId)||null;
+}
+
+function setActiveProfile(id){
+  activeProfileId=id;
+  saveProfilesToStorage();
+  renderProfileScreen();
+}
+
+function deleteProfile(id){
+  if(profiles.length<=1)return;
+  profiles=profiles.filter(p=>p.id!==id);
+  if(activeProfileId===id) activeProfileId=profiles[0]?.id||null;
+  saveProfilesToStorage();
+  renderProfileScreen();
+}
+
+function toggleProfileHR(id){
+  const p=profiles.find(x=>x.id===id);
+  if(!p) return;
+  p.hrEnabled=!p.hrEnabled;
+  saveProfilesToStorage();
+  renderProfileScreen();
+  // 用户刚刚开启心率 → 立即请求授权，让系统弹出权限对话框
+  if(p.hrEnabled) requestHRAuthorization();
+}
+
+async function requestHRAuthorization(){
+  try{
+    if(typeof HealthKitPlugin!=='undefined'){
+      const avail=await HealthKitPlugin.isAvailable();
+      if(avail?.available) await HealthKitPlugin.requestAuthorization();
+    }
+  }catch(e){ console.warn('[HR] requestAuthorization failed:',e); }
+}
+
+function submitAddProfile(){
+  const inp=document.getElementById('newProfileName');
+  const name=(inp?.value||'').trim();
+  if(!name) return;
+  if(profiles.some(p=>p.name===name)){
+    inp.style.outline='2px solid rgba(255,60,60,.7)';
+    setTimeout(()=>inp.style.outline='',1400);
+    inp.placeholder='名字已存在，请换一个';
+    return;
+  }
+  const p={id:Date.now()+profiles.length,name,hrEnabled:false};
+  profiles.push(p);
+  if(!activeProfileId) activeProfileId=p.id;
+  saveProfilesToStorage();
+  if(inp){ inp.value=''; inp.placeholder='输入名字'; }
+  renderProfileScreen();
+}
+
+let profileEditMode = false;
+let profileDeleteSelected = new Set();
+let currentPersonId = null;
+
+function toggleProfileEditMode(){
+  profileEditMode = !profileEditMode;
+  if(!profileEditMode) profileDeleteSelected.clear();
+  const btn = document.getElementById('profileEditBtn');
+  if(btn) btn.textContent = profileEditMode ? '完成' : '管理';
+  renderProfileScreen();
+}
+
+function toggleProfileDeleteSelect(id){
+  if(profileDeleteSelected.has(id)) profileDeleteSelected.delete(id);
+  else profileDeleteSelected.add(id);
+  // 更新 UI 不整体重渲
+  renderProfileScreen();
+}
+
+function confirmDeleteProfiles(){
+  if(!profileDeleteSelected.size) return;
+  const idsToDelete = [...profileDeleteSelected];
+  profiles = profiles.filter(p => !idsToDelete.includes(p.id));
+  if(!profiles.find(p=>p.id===activeProfileId)){
+    activeProfileId = profiles[0]?.id || null;
+  }
+  profileDeleteSelected.clear();
+  saveProfilesToStorage();
+  profileEditMode = false;
+  const btn = document.getElementById('profileEditBtn');
+  if(btn) btn.textContent = '管理';
+  renderProfileScreen();
+}
+
+function navToPerson(id){
+  currentPersonId = id;
+  navTo('person');
+}
+
+function renderProfileScreen(){
+  const list = document.getElementById('profileList');
+  const deleteBar = document.getElementById('profileDeleteBar');
+  const addCard = document.getElementById('profileAddCard');
+  if(!list) return;
+
+  // 删除确认栏 & 添加框
+  if(deleteBar) deleteBar.style.display = (profileEditMode && profileDeleteSelected.size) ? 'block' : 'none';
+  if(addCard) addCard.style.display = profileEditMode ? 'none' : 'block';
+
+  if(!profiles.length){
+    list.innerHTML=`<div style="padding:32px 16px;text-align:center;color:rgba(255,255,255,.3);font-size:14px">还没有使用者档案，在下方输入名字来添加。</div>`;
+    return;
+  }
+  list.innerHTML=`<div class="settings-card" style="padding:0;overflow:hidden">`+
+    profiles.map((p,i)=>{
+      const color=PROFILE_COLORS[i%PROFILE_COLORS.length];
+      const isActive=p.id===activeProfileId;
+      const initial=p.name.trim().charAt(0)||'?';
+      const isSelected=profileDeleteSelected.has(p.id);
+      if(profileEditMode){
+        // 管理模式：多选删除
+        return `<div class="profile-item${isSelected?' pf-del-selected':''}"
+                     onclick="toggleProfileDeleteSelect(${p.id})">
+          <div class="profile-del-checkbox${isSelected?' checked':''}">${isSelected?'✓':''}</div>
+          <div class="profile-avatar" style="background:${color}">${initial}</div>
+          <div class="profile-info" style="flex:1">
+            <div class="profile-name-row"><span>${p.name}</span>${isActive?`<span class="profile-active-tag">使用中</span>`:''}</div>
+            <div class="profile-sub">心率：${p.hrEnabled?'已开启':'未开启'}</div>
+          </div>
+        </div>`;
+      } else {
+        // 正常模式：点击进详情页修改设置
+        // 点头像切换"使用中"；点右侧区域进详情
+        return `<div class="profile-item${isActive?' pf-active':''}">
+          <div class="profile-avatar" style="background:${color};cursor:pointer"
+               onclick="setActiveProfile(${p.id})" title="设为当前使用者">${initial}</div>
+          <div class="profile-info" style="flex:1;cursor:pointer" onclick="navToPerson(${p.id})">
+            <div class="profile-name-row">
+              <span>${p.name}</span>
+              ${isActive?`<span class="profile-active-tag">使用中</span>`:`<span style="font-size:11px;color:rgba(255,255,255,.28)">点头像切换</span>`}
+            </div>
+            <div class="profile-sub">心率记录：${p.hrEnabled?'已开启':'未开启'} · 点击查看详情</div>
+          </div>
+          <span style="color:rgba(255,255,255,.25);font-size:18px;pointer-events:none">›</span>
+        </div>`;
+      }
+    }).join('')+`</div>`;
+}
+
+// ── 个人页面渲染 ──
+function renderPersonScreen(id){
+  const body = document.getElementById('personBody');
+  if(!body) return;
+  const p = profiles.find(x=>x.id===id);
+  if(!p){ body.innerHTML=`<div style="padding:40px 16px;text-align:center;color:rgba(255,255,255,.3)">找不到此档案</div>`; return; }
+  const color = PROFILE_COLORS[profiles.indexOf(p)%PROFILE_COLORS.length];
+  const initial = p.name.trim().charAt(0)||'?';
+  const isActive = p.id===activeProfileId;
+
+  // 统计此人的比赛数
+  let allHistory=[];
+  try{ allHistory=JSON.parse(localStorage.getItem('sb_history')||'[]'); }catch(e){}
+  const myMatches = allHistory.filter(r=>r.hrProfileId===p.id || r.names?.includes(p.name));
+
+  body.innerHTML=`
+    <!-- 头部 -->
+    <div style="display:flex;align-items:center;gap:16px;padding:20px 20px 16px">
+      <div class="profile-avatar" style="width:60px;height:60px;font-size:22px;background:${color}">${initial}</div>
+      <div style="flex:1">
+        <div id="personNameDisplay" style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">${p.name}</div>
+        ${isActive
+          ? `<div style="font-size:12px;color:var(--accent,#0A84FF);font-weight:600">✓ 使用中</div>`
+          : `<div style="font-size:12px;color:rgba(255,255,255,.3)">返回列表点头像可切换</div>`
+        }
+      </div>
+    </div>
+
+    <!-- 修改名字 -->
+    <div class="settings-card">
+      <div class="settings-row" style="gap:10px;flex-wrap:nowrap">
+        <input class="team-input" id="personNameInput" value="${p.name}" maxlength="12"
+               placeholder="修改名字" style="flex:1;margin:0"
+               onkeydown="if(event.key==='Enter')savePersonName(${p.id})">
+        <button class="step-btn" style="width:64px;height:44px;border-radius:12px;font-size:14px;flex-shrink:0"
+                onclick="savePersonName(${p.id})">保存</button>
+      </div>
+    </div>
+
+    <!-- 心率开关 -->
+    <div class="settings-card" style="margin-top:8px">
+      <div class="settings-row">
+        <div class="settings-copy">
+          <div class="settings-title">心率记录</div>
+          <div class="settings-desc">比赛时通过 Apple Watch 记录实时心率</div>
+        </div>
+        <button class="toggle-btn${p.hrEnabled?' on':''}" id="personHRBtn"
+                onclick="toggleProfileHR(${p.id});renderPersonScreen(${p.id})">${p.hrEnabled?'开启':'关闭'}</button>
+      </div>
+    </div>
+
+    <!-- 数据导出 -->
+    <div class="settings-card" style="margin-top:8px">
+      <div class="settings-row" style="cursor:pointer" onclick="exportPersonData(${p.id})">
+        <div class="settings-copy">
+          <div class="settings-title">导出数据</div>
+          <div class="settings-desc">导出相关的 ${myMatches.length} 场比赛记录（JSON）</div>
+        </div>
+        <span style="color:rgba(255,255,255,.3);font-size:20px">›</span>
+      </div>
+    </div>
+
+    <!-- 删除档案 -->
+    <div class="settings-card" style="margin-top:8px">
+      <div class="settings-row" style="cursor:pointer" onclick="confirmDeleteProfile(${p.id})">
+        <div class="settings-copy">
+          <div class="settings-title" style="color:rgba(255,80,80,.85)">删除档案</div>
+          <div class="settings-desc">仅删除此身份，不影响历史比赛记录</div>
+        </div>
+        <span style="color:rgba(255,80,80,.4);font-size:20px">›</span>
+      </div>
+    </div>
+  `;
+}
+
+function savePersonName(id){
+  const inp = document.getElementById('personNameInput');
+  const newName = (inp?.value||'').trim();
+  if(!newName) return;
+  const p = profiles.find(x=>x.id===id);
+  if(!p) return;
+  // 重名检验（排除自身）
+  if(profiles.some(x=>x.id!==id && x.name===newName)){
+    inp.style.outline='2px solid rgba(255,60,60,.7)';
+    setTimeout(()=>inp.style.outline='',1400);
+    return;
+  }
+  p.name = newName;
+  saveProfilesToStorage();
+  // 更新头部显示
+  const disp = document.getElementById('personNameDisplay');
+  if(disp) disp.textContent = newName;
+  inp.blur();
+  // 轻提示
+  const btn = inp?.nextElementSibling;
+  if(btn){ const orig=btn.textContent; btn.textContent='✓'; setTimeout(()=>btn.textContent=orig,1200); }
+}
+
+function confirmDeleteProfile(id){
+  const p = profiles.find(x=>x.id===id);
+  if(!p) return;
+  // 用原生 confirm（iOS 上即 UIAlertController）
+  if(!confirm(`删除「${p.name}」的档案？\n历史比赛记录不会被删除。`)) return;
+  deleteProfile(id);
+}
+
+function deleteProfile(id){
+  const idx = profiles.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  profiles.splice(idx,1);
+  // 如果删除的是当前激活的，改选第一个
+  if(activeProfileId===id){
+    activeProfileId = profiles.length ? profiles[0].id : null;
+  }
+  saveProfilesToStorage();
+  navTo('profile','back');
+}
+
+function exportPersonData(id){
+  const p = profiles.find(x=>x.id===id);
+  if(!p) return;
+  let allHistory=[];
+  try{ allHistory=JSON.parse(localStorage.getItem('sb_history')||'[]'); }catch(e){}
+  const myMatches = allHistory.filter(r=>r.hrProfileId===id||r.names?.includes(p.name));
+  const payload = { exportedAt: new Date().toISOString(), profile: p, matches: myMatches };
+  const filename = `scoreboard_${p.name}_${new Date().toISOString().slice(0,10)}.json`;
+  _triggerExportShare(JSON.stringify(payload,null,2), filename, `${p.name} 的比赛记录`);
+}
+
+// ── 心率数据采集（被动读取 Apple Watch 已记录的数据）──
+async function fetchAndStoreHeartRate(matchId, startMs, endMs){
+  try{
+    if(typeof HealthKitPlugin==='undefined')return;
+    const avail=await HealthKitPlugin.isAvailable();
+    if(!avail?.available)return;
+    await HealthKitPlugin.requestAuthorization();
+    const result=await HealthKitPlugin.queryHeartRate({startMs,endMs});
+    const samples=result?.samples||[];
+    if(!samples.length)return;
+    // 写回 localStorage
+    const all=JSON.parse(localStorage.getItem('sb_history')||'[]');
+    const idx=all.findIndex(r=>r.id===matchId);
+    if(idx>=0){
+      all[idx].heartRateTimeline=samples;
+      localStorage.setItem('sb_history',JSON.stringify(all));
+      // 如果当前详情页正好展示这场比赛，静默刷新
+      if(currentDetailId===matchId) renderDetail(all[idx]);
+    }
+  }catch(e){
+    console.warn('[HR] fetchAndStoreHeartRate failed:',e);
+  }
+}
+
+// ══════════════════════════════════════════
+// Apple Watch 实时心率
+// ══════════════════════════════════════════
+let liveHRTimeline = [];     // [{timestamp, bpm}] — 比赛期间实时收到的心率
+let watchListenerHandle = null;
+let watchControlListenerHandle = null;
+let watchFinishedListenerHandle = null;
+let watchStopRequestedListenerHandle = null;
+let lastWatchStateSignature = '';
+
+async function shouldRecordHeartRateForCurrentMatch() {
+  const ap = getActiveProfile();
+  if (!ap || !ap.hrEnabled) return false;
+  // 只有当前档案的名字出现在本局比赛队伍中，才记录心率
+  const names = CFG?.names || [];
+  return names.some(n => n === ap.name);
+}
+
+async function ensureWatchReadyForMatch() {
+  if (typeof WatchPlugin === 'undefined') {
+    alert('当前使用中的档案已开启心率记录，但设备上没有可用的 Watch 连接能力。\n\n请先连接 Apple Watch，或到个人中心关闭该档案的心率记录。');
+    return false;
+  }
+  try {
+    const status = await WatchPlugin.isAvailable();
+    const ready = Boolean(status?.supported && status?.paired && status?.installed);
+    if (!ready) {
+      const details = [
+        `paired: ${status?.paired ? 'yes' : 'no'}`,
+        `installed: ${status?.installed ? 'yes' : 'no'}`,
+        `reachable: ${status?.reachable ? 'yes' : 'no'}`,
+        `activation: ${status?.activationState || 'unknown'}`
+      ].join('\n');
+      alert(`当前使用中的档案已开启心率记录，但没有可用的 Apple Watch。\n\n请先让 iPhone 和 Apple Watch 正常配对，并通过 Xcode 将主 App 安装到手机（由系统自动安装手表 companion app）。\n\n${details}`);
+    }
+    return ready;
+  } catch (e) {
+    console.warn('[Watch] isAvailable failed:', e);
+    alert('检查 Apple Watch 连接状态失败，请稍后重试。');
+    return false;
+  }
+}
+
+function normalizeWatchRecord(record) {
+  if (!record || typeof record !== 'object') return null;
+  const ap = getActiveProfile();
+  const normalized = {
+    id: record.id || Date.now(),
+    date: record.date || Date.now(),
+    sport: record.sport || 'badminton',
+    names: Array.isArray(record.names) && record.names.length >= 2 ? record.names : ['我方', '对手'],
+    rules: record.rules || { ptWin: 21, setWin: 1, totalSets: 1 },
+    events: Array.isArray(record.events) ? record.events : [],
+    sets: Array.isArray(record.sets) ? record.sets : [],
+    setScores: Array.isArray(record.setScores) ? record.setScores : [],
+    setTimes: Array.isArray(record.setTimes) ? record.setTimes : [],
+    winner: Number.isInteger(record.winner) ? record.winner : null,
+    duration: Number(record.duration || 0),
+    heartRateTimeline: Array.isArray(record.heartRateTimeline) ? record.heartRateTimeline : [],
+    hrPlayerIdx: Number.isInteger(record.hrPlayerIdx) ? record.hrPlayerIdx : 0,
+    hrProfileId: record.hrProfileId ?? (ap?.hrEnabled && Array.isArray(record.names) && record.names.includes(ap.name) ? ap.id : null),
+    _saved: true,
+  };
+  return normalized;
+}
+
+function persistWatchMatchRecord(record) {
+  const normalized = normalizeWatchRecord(record);
+  if (!normalized) return false;
+  // 心率兜底：手表未返回心率数据时，尝试从 HealthKit 查询
+  if (!normalized.heartRateTimeline.length && normalized.hrProfileId) {
+    const startMs = normalized.date - (normalized.duration || 0);
+    setTimeout(() => fetchAndStoreHeartRate(normalized.id, startMs, normalized.date), 500);
+  }
+  if (Array.isArray(normalized.names)) rememberWatchNames(normalized.names);
+  try {
+    const all = JSON.parse(localStorage.getItem('sb_history') || '[]');
+    const idx = all.findIndex(item => item.id === normalized.id);
+    if (idx >= 0) {
+      all[idx] = normalized;
+    } else {
+      all.unshift(normalized);
+    }
+    if (all.length>=95 && all.length<=100) maybeWarnHistoryNearLimit(all.length);
+    if (all.length > 100) all.length = 100;
+    localStorage.setItem('sb_history', JSON.stringify(all));
+    if (currentScreen === 'history') renderHistory();
+    if (currentScreen === 'detail' && currentDetailId === normalized.id) renderDetail(normalized);
+    return true;
+  } catch (e) {
+    console.warn('[Watch] persistWatchMatchRecord failed:', e);
+    return false;
+  }
+}
+
+async function consumePendingWatchMatches() {
+  if (typeof WatchPlugin === 'undefined' || typeof WatchPlugin.consumePendingWatchMatches !== 'function') return;
+  try {
+    const result = await WatchPlugin.consumePendingWatchMatches();
+    const matches = Array.isArray(result?.matches) ? result.matches : [];
+    console.info('[Watch][JS] consumePendingWatchMatches', matches);
+    matches.forEach(item => {
+      const record = item?.record || item;
+      persistWatchMatchRecord(record);
+    });
+  } catch (e) {
+    console.warn('[Watch] consumePendingWatchMatches failed:', e);
+  }
+}
+
+function schedulePendingWatchMatchRetries() {
+  [800, 2200, 5000].forEach(delay => {
+    setTimeout(() => { consumePendingWatchMatches(); }, delay);
+  });
+}
+
+function updateLiveHRDisplay(bpm) {
+  const badge = document.getElementById('hrBadge');
+  const val   = document.getElementById('hrBadgeVal');
+  if (!badge || !val) return;
+  if (!bpm || bpm < 30) {
+    badge.style.display = 'none';
+    return;
+  }
+  val.textContent = bpm;
+  badge.style.display = '';
+}
+
+function initWatchHR() {
+  if (typeof WatchPlugin === 'undefined') return;
+  try {
+    if (!watchListenerHandle) {
+      watchListenerHandle = WatchPlugin.addListener('heartRateUpdate', data => {
+        console.info('[Watch][JS] heartRateUpdate', data);
+        const bpm = data?.bpm;
+        if (!bpm || bpm < 30 || bpm > 250) return;
+        const ts = data?.timestamp || Date.now();
+        // 只在比赛进行中才收集 & 显示
+        if (S && S.winner === null && !S.pausedAt) {
+          liveHRTimeline.push({ timestamp: ts, bpm });
+        }
+        updateLiveHRDisplay(bpm);
+      });
+    }
+    if (!watchControlListenerHandle) {
+      watchControlListenerHandle = WatchPlugin.addListener('watchControl', data => {
+        console.info('[Watch][JS] watchControl', data);
+        handleWatchControl(data);
+      });
+    }
+    if (!watchFinishedListenerHandle) {
+      watchFinishedListenerHandle = WatchPlugin.addListener('watchMatchFinished', data => {
+        console.info('[Watch][JS] watchMatchFinished', data);
+        if (persistWatchMatchRecord(data?.record || data)) {
+          console.info('[Watch] saved standalone watch match');
+        }
+      });
+    }
+    if (!watchStopRequestedListenerHandle) {
+      watchStopRequestedListenerHandle = WatchPlugin.addListener('watchStopRequested', () => {
+        console.info('[Watch][JS] watchStopRequested');
+        if (currentScreen === 'game' && S && S.winner === null) {
+          menuFinish();
+        }
+      });
+    }
+  } catch(e) {
+    console.warn('[Watch] addListener failed:', e);
+  }
+}
+
+function getWatchSportLabel(sport){
+  switch (sport) {
+    case 'badminton': return '羽毛球';
+    case 'tabletennis': return '乒乓球';
+    case 'tennis': return '网球';
+    case 'basketball': return '篮球';
+    case 'football': return '足球';
+    default: return sport || '比赛';
+  }
+}
+
+function handleWatchControl(data) {
+  const type = data?.type;
+  const team = Number(data?.team);
+  const delta = Number(data?.delta);
+  if (!type || !S || S.winner !== null || currentScreen !== 'game') return;
+  if (type === 'addPoint' && (team === 0 || team === 1)) {
+    addPt(team);
+    return;
+  }
+  if (type === 'addScore' && CFG.sport === 'basketball' && (team === 0 || team === 1) && [1,2,3].includes(delta)) {
+    addBB(team, delta);
+    return;
+  }
+  if (type === 'undo') {
+    menuUndo();
+    return;
+  }
+  if (type === 'nextPeriod' && CFG.sport === 'basketball') {
+    menuNextQuarter();
+    return;
+  }
+  if (type === 'togglePause') {
+    toggleClock();
+    syncWatchMatchState(true);
+  }
+}
+
+async function syncWatchMatchState(force = false) {
+  if (typeof WatchPlugin === 'undefined') return;
+  const active = Boolean(S && currentScreen === 'game' && S.winner === null);
+  const score = S
+    ? [
+        Number(document.getElementById('scoreA')?.textContent || 0),
+        Number(document.getElementById('scoreB')?.textContent || 0)
+      ]
+    : [0,0];
+  const payload = {
+    isActive: active,
+    sport: CFG.sport || 'badminton',
+    sportLabel: getWatchSportLabel(CFG.sport),
+    ptWin: Number(CFG.ptWin || 0),
+    setWin: Number(CFG.setWin || 0),
+    totalSets: Number(CFG.totalSets || 0),
+    periodIndex: CFG.sport === 'basketball'
+      ? Number(S?.quarter || 1)
+      : CFG.sport === 'tennis'
+        ? Number((S?.sets?.[0] || 0) + (S?.sets?.[1] || 0) + 1)
+        : Number(S?.setNum || 1),
+    setWins: Array.isArray(S?.sets) ? [Number(S.sets[0] || 0), Number(S.sets[1] || 0)] : [0, 0],
+    teamAName: CFG.names?.[0] || '队伍 A',
+    teamBName: CFG.names?.[1] || '队伍 B',
+    teamAScore: Number(score?.[0] || 0),
+    teamBScore: Number(score?.[1] || 0),
+    teamASubtitle: document.getElementById('subA')?.textContent || document.getElementById('setsA')?.textContent || '',
+    teamBSubtitle: document.getElementById('subB')?.textContent || document.getElementById('setsB')?.textContent || '',
+    summary: document.getElementById('statusPill')?.textContent || '',
+    periodLabel: document.getElementById('statusPill')?.textContent || '',
+    isPaused: Boolean(S?.pausedAt),
+    canUndo: H.length > 0,
+    supportsMultiPoint: CFG.sport === 'basketball',
+    elapsedSeconds: Math.max(0, Math.floor(getElapsedMs() / 1000)),
+  };
+  const signature = JSON.stringify(payload);
+  if (!force && signature === lastWatchStateSignature) return;
+  lastWatchStateSignature = signature;
+  try {
+    console.info('[Watch][JS] syncMatchState', payload);
+    await WatchPlugin.syncMatchState(payload);
+  } catch (e) {
+    console.warn('[Watch] syncMatchState failed:', e);
+  }
+}
+
+async function startWatchWorkout() {
+  if (typeof WatchPlugin === 'undefined') return;
+  liveHRTimeline = [];
+  try {
+    const status = await WatchPlugin.isAvailable();
+    console.info('[Watch] availability', status);
+    if (!(status?.supported && status?.paired && status?.installed)) return;
+    const ap = getActiveProfile();
+    const sport = CFG.sport || 'badminton';
+    const playerName = ap?.name || CFG.names[0] || '';
+    console.info('[Watch][JS] startWorkout', { sport, playerName });
+    await WatchPlugin.startWorkout({ sport, playerName });
+    await syncWatchMatchState(true);
+  } catch(e) {
+    console.warn('[Watch] startWorkout failed:', e);
+  }
+}
+
+async function stopWatchWorkout() {
+  if (typeof WatchPlugin === 'undefined') return;
+  try {
+    console.info('[Watch][JS] stopWorkout');
+    await syncWatchMatchState(true);
+    await WatchPlugin.stopWorkout();
+  } catch(e) {
+    console.warn('[Watch] stopWorkout failed:', e);
+  }
+  lastWatchStateSignature = '';
 }
 
 // ══════════════════════════════════════════
@@ -2388,13 +3281,41 @@ function menuFinish(){
   closeMenu();
   clearPendingScore(false);
   if(!S||S.winner!==null) return;
-  const a=CFG.sport==='basketball'?S.score[0]:getCumScore()[0];
-  const b=CFG.sport==='basketball'?S.score[1]:getCumScore()[1];
-  if(a===b){
-    alert('当前平分，不能直接结束比赛。请继续比赛或进入下一节/加时。');
+
+  if(CFG.sport==='basketball'){
+    const [a,b]=[S.score[0],S.score[1]];
+    if(a===b){alert('当前平分，不能直接结束比赛。');return;}
+    finalizeCurrentMatch(a>b?0:1);
     return;
   }
-  finalizeCurrentMatch(a>b ? 0 : 1);
+
+  if(CFG.sport==='tennis'){
+    const [sa,sb]=[S.sets[0],S.sets[1]];
+    if(sa!==sb){finalizeCurrentMatch(sa>sb?0:1);return;}
+    const [ga,gb]=[S.games[0],S.games[1]];
+    if(ga!==gb){finalizeCurrentMatch(ga>gb?0:1);return;}
+    const [pa,pb]=[S.pts[0],S.pts[1]];
+    if(pa!==pb){finalizeCurrentMatch(pa>pb?0:1);return;}
+    alert('当前完全平分，不能结束比赛。');
+    return;
+  }
+
+  // 羽毛球/乒乓球：当前局领先方记为本局胜者，再判比赛胜负
+  const [ptA,ptB]=[S.pts[0],S.pts[1]];
+  if(ptA!==ptB){
+    const sw=ptA>ptB?0:1;
+    S.setScores=S.setScores||[];
+    S.setScores.push([ptA,ptB]);
+    S.setTimes=S.setTimes||[S.startTime];
+    S.setTimes.push(Date.now());
+    S.sets[sw]++;
+  }
+  const [sA,sB]=[S.sets[0],S.sets[1]];
+  if(sA!==sB){finalizeCurrentMatch(sA>sB?0:1);return;}
+  // 局数仍平：用累计总得分决出
+  const [cumA,cumB]=getCumScore();
+  if(cumA!==cumB){finalizeCurrentMatch(cumA>cumB?0:1);return;}
+  alert('当前完全平分，不能直接结束比赛。');
 }
 function menuUndo(){closeMenu();clearPendingScore(false);if(!H.length)return;S=H.pop();document.getElementById('overlay').hidden=true;render();}
 function menuReset(){closeMenu();clearPendingScore(false);S=mkState();H=[];document.getElementById('overlay').hidden=true;render();}
@@ -2566,7 +3487,7 @@ function buildMatchupView(all){
       const ds=`${d.getMonth()+1}/${d.getDate()}`;
       const sc=getMatchDisplayScores(r).major;
       const wname=r.names[r.winner];
-      const wcolor=wname===n0?'#E07060':'#6090B8';
+      const wcolor=wname===n0?'var(--line-a,#E07060)':'var(--line-b,#6090B8)';
       return `<div class="matchup-row">
         <span class="matchup-row-date">${ds}</span>
         <span class="matchup-row-score">${sc}</span>
@@ -2595,6 +3516,7 @@ function deleteHistory(id){
   try{all=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(e){}
   all=all.filter(x=>x.id!==id);
   localStorage.setItem('sb_history', JSON.stringify(all));
+  syncProfilesToWatch();
   renderHistoryList();
 }
 
@@ -2616,6 +3538,14 @@ function openDetail(id){
   currentDetailId = id;
   renderDetail(r);
   navTo('detail');
+}
+
+function toggleDetailCollapse(id){
+  const body=document.getElementById('cbody_'+id);
+  const btn=document.getElementById('ctoggle_'+id);
+  if(!body||!btn)return;
+  const open=body.classList.toggle('open');
+  btn.classList.toggle('open',open);
 }
 
 function openMatchupDetail(encodedKey){
@@ -2652,8 +3582,8 @@ function renderDetail(r){
       <div class="d-section-title" style="display:flex;align-items:center;justify-content:space-between">
         全场走势
         <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,.35)">
-          <span style="display:inline-block;width:10px;height:3px;background:#D95F4B;vertical-align:middle;border-radius:2px;margin-right:3px"></span>${names[0]}
-          <span style="display:inline-block;width:10px;height:3px;background:#4A7FA8;vertical-align:middle;border-radius:2px;margin:0 3px 0 10px"></span>${names[1]}
+          <span style="display:inline-block;width:10px;height:3px;background:var(--line-a,var(--clr-a,#D95F4B));vertical-align:middle;border-radius:2px;margin-right:3px"></span>${names[0]}
+          <span style="display:inline-block;width:10px;height:3px;background:var(--line-b,var(--clr-b,#4A7FA8));vertical-align:middle;border-radius:2px;margin:0 3px 0 10px"></span>${names[1]}
         </span>
       </div>
       <div class="d-card" style="padding:8px 8px 4px">${progChart}</div>
@@ -2697,8 +3627,15 @@ function renderDetail(r){
   // 节奏分析
   html+=buildPaceSection(r,setSections);
 
-  // 分局详情
-  html+=`<div class="d-section"><div class="d-section-title">分局详情</div>`;
+  // 分局详情（默认折叠）
+  const colId='setDetail_'+(r.id||Date.now());
+  html+=`<div class="d-section">
+    <button class="collapse-toggle" id="ctoggle_${colId}" onclick="toggleDetailCollapse('${colId}')">
+      <span>分局详情</span>
+      <span class="collapse-caret">▼</span>
+    </button>
+    <div class="collapse-body" id="cbody_${colId}">
+      <div class="collapse-inner">`;
   setSections.forEach(section=>{
     html+=`<div class="set-detail">
       <div class="set-detail-card">
@@ -2711,12 +3648,33 @@ function renderDetail(r){
         </div>
         <div class="set-detail-rule">${buildSetRuleSummary(r, section)}</div>
         ${section.events.length>1 ? `<div class="chart-wrap">${buildChartFromEvents(section.events)}</div>` : ''}
+        ${(()=>{
+          // 本局心率折线图
+          const hrTimeline = r.heartRateTimeline;
+          if (!Array.isArray(hrTimeline) || !hrTimeline.length) return '';
+          const s = section.startMs, e = section.endMs;
+          const pts = hrTimeline.filter(p => p.bpm >= 30 && p.bpm <= 250 &&
+            (!s || p.timestamp >= s) && (!e || p.timestamp <= e + 5000));
+          if (pts.length < 2) return '';
+          const hrName = (r.hrPlayerIdx === 0 || r.hrPlayerIdx === 1)
+            ? (names[r.hrPlayerIdx] || '球员')
+            : (names[0] || '球员');
+          return buildSetHRChart(pts, hrName);
+        })()}
         ${buildLogFromEvents(section.events,names)}
       </div>
     </div>`;
   });
-  html+=`</div>`;
-  html+=`<div class="detail-delete-wrap"><button class="detail-delete-btn" onclick="showDeleteConfirm()">删除这条记录</button></div>`;
+  html+=`    </div>
+    </div>
+  </div>`;
+  // 洞察总结卡片（最下方）
+  html+=buildInsightSummary(r,names);
+
+  html+=`<div class="detail-delete-wrap">
+    <button class="detail-export-btn" onclick="exportSingleMatch(${r.id})">导出这条记录</button>
+    <button class="detail-delete-btn" onclick="showDeleteConfirm()">删除这条记录</button>
+  </div>`;
 
   body.innerHTML=html;
   body.scrollTop=0;
@@ -2734,12 +3692,12 @@ function renderMatchupDetail(data){
     <div class="d-card">
       <div class="set-row">
         <span class="set-label">${n0}</span>
-        <span class="set-score" style="color:#E07060">${data.wins[n0]} 胜</span>
+        <span class="set-score" style="color:var(--line-a,#E07060)">${data.wins[n0]} 胜</span>
         <span class="set-time">总胜场</span>
       </div>
       <div class="set-row">
         <span class="set-label">${n1}</span>
-        <span class="set-score" style="color:#6090B8">${data.wins[n1]} 胜</span>
+        <span class="set-score" style="color:var(--line-b,#6090B8)">${data.wins[n1]} 胜</span>
         <span class="set-time">总胜场</span>
       </div>
     </div>
@@ -2788,6 +3746,7 @@ function deleteCurrentDetail(){
   const inReal=real.some(x=>x.id===id);
   if(inReal){
     localStorage.setItem('sb_history',JSON.stringify(real.filter(x=>x.id!==id)));
+    syncProfilesToWatch();
   } else {
     // 演示记录
     let demo=[];
@@ -2798,7 +3757,183 @@ function deleteCurrentDetail(){
   navTo('history', 'back');
 }
 
+// ══════════════════════════════════════════
+// 规则引擎：三句话洞察总结
+// ══════════════════════════════════════════
+function buildInsightSummary(r, names) {
+  const evs = r.events || [];
+  if (evs.length < 5) return '';
+  const w = r.winner;
+  const wName = w != null ? names[w] : null;
+
+  // ── 领先权统计 ──
+  let leadChanges = 0, prevLdr = -1;
+  evs.forEach(ev => {
+    const ldr = ev.cumA > ev.cumB ? 0 : ev.cumA < ev.cumB ? 1 : -1;
+    if (prevLdr !== -1 && ldr !== -1 && ldr !== prevLdr) leadChanges++;
+    prevLdr = ldr;
+  });
+
+  // 胜者曾落后最大分差
+  let maxDeficit = 0;
+  if (w != null) {
+    evs.forEach(ev => {
+      const behind = (w === 0 ? ev.cumB - ev.cumA : ev.cumA - ev.cumB);
+      if (behind > maxDeficit) maxDeficit = behind;
+    });
+  }
+
+  // ── 最长连得（哪方、多少分、从哪个比分开始）──
+  let best = {p: -1, cnt: 0, startIdx: 0};
+  let cur  = {p: -1, cnt: 0, startIdx: 0};
+  evs.forEach((ev, i) => {
+    if (ev.p === cur.p) { cur.cnt++; }
+    else { cur = {p: ev.p, cnt: 1, startIdx: i}; }
+    if (cur.cnt > best.cnt) best = {...cur};
+  });
+
+  // ── 第一句：结果 + 格局 ──
+  const setSecs = buildSetSections(r);
+  const scoreStr = setSecs.map(s => `${s.score[0]}:${s.score[1]}`).join(' / ');
+  let shape = '';
+  if (maxDeficit === 0 && w != null)       shape = '，全程保持领先';
+  else if (maxDeficit >= 5 && leadChanges === 0) shape = `，曾落后 ${maxDeficit} 分后完成反超`;
+  else if (leadChanges >= 3)               shape = `，${leadChanges} 次领先权交换，比分拉锯激烈`;
+  else if (leadChanges > 0)                shape = `，经历 ${leadChanges} 次反超后锁定胜局`;
+  const s1 = w != null
+    ? `${wName} 以 ${scoreStr} 获胜${shape}。`
+    : `比赛最终比分 ${scoreStr}${shape}。`;
+
+  // ── 第二句：关键势头 / 转折点 ──
+  let s2 = '';
+  if (best.cnt >= 3) {
+    const atScore = best.startIdx > 0
+      ? `${evs[best.startIdx - 1].cumA}:${evs[best.startIdx - 1].cumB}`
+      : '0:0';
+    s2 = `${names[best.p]} 最大连续拿下 ${best.cnt} 分（比分 ${atScore} 时启动），是全场最关键的一波。`;
+  } else if (leadChanges > 0) {
+    for (let i = 1; i < evs.length; i++) {
+      const pl = evs[i-1].cumA > evs[i-1].cumB ? 0 : evs[i-1].cumA < evs[i-1].cumB ? 1 : -1;
+      const cl = evs[i].cumA   > evs[i].cumB   ? 0 : evs[i].cumA   < evs[i].cumB   ? 1 : -1;
+      if (pl !== -1 && cl !== -1 && pl !== cl) {
+        s2 = `比分在 ${evs[i].cumA}:${evs[i].cumB} 时首次出现反超，此后局势持续变化。`;
+        break;
+      }
+    }
+  }
+
+  // ── 第三句：节奏趋势 / 收局能力 ──
+  let s3 = '';
+  const ms = evs.map(e => e.pointMs || 0).filter(v => v > 200 && v < 600000);
+  if (ms.length >= 6) {
+    const h = Math.floor(ms.length / 2);
+    const avg1 = ms.slice(0, h).reduce((a, b) => a + b, 0) / h;
+    const avg2 = ms.slice(h).reduce((a, b) => a + b, 0) / (ms.length - h);
+    const ratio = avg2 / avg1;
+    if (ratio > 1.3)
+      s3 = `后半局节奏放慢约 ${Math.round((ratio - 1) * 100)}%，注意体能分配和节奏控制。`;
+    else if (ratio < 0.75)
+      s3 = `后半局节奏提速 ${Math.round((1 - ratio) * 100)}%，主动加压效果明显。`;
+  }
+  if (!s3 && w != null) {
+    const last5 = evs.slice(-5);
+    const wLast = last5.filter(e => e.p === w).length;
+    if (wLast >= 4)      s3 = `收局稳定，最后 5 分赢了 ${wLast} 分，关键时刻心理出色。`;
+    else if (wLast <= 1) s3 = `收局较险，最后 5 分仅得 ${wLast} 分，可以加强比赛后段的稳定性。`;
+  }
+  if (!s3) s3 = '全场节奏平稳，前后半局差异不大。';
+
+  // ── 心率段（如果有数据）──
+  let hrHtml='';
+  const hrData=r.heartRateTimeline||[];
+  if(hrData.length>=3){
+    const bpms=hrData.map(s=>s.bpm).filter(b=>b>30&&b<250);
+    if(bpms.length>=3){
+      const avgBpm=Math.round(bpms.reduce((a,b)=>a+b,0)/bpms.length);
+      const maxBpm=Math.max(...bpms);
+      const minBpm=Math.min(...bpms);
+      // 简单强度分区（基于 220-年龄 估算，无年龄时用 185 作参考最大值）
+      const refMax=185;
+      const pct=avgBpm/refMax;
+      let zone='';
+      if(pct>=0.9)      zone='🔥 极限强度';
+      else if(pct>=0.8) zone='💪 高强度';
+      else if(pct>=0.7) zone='⚡ 中高强度';
+      else if(pct>=0.6) zone='🏃 中等强度';
+      else              zone='🚶 轻松强度';
+      hrHtml=`<div class="insight-hr-row">
+        <span class="insight-hr-badge">${zone}</span>
+        <span class="insight-hr-stat">平均 <b>${avgBpm}</b> bpm</span>
+        <span class="insight-hr-stat">峰值 <b>${maxBpm}</b> bpm</span>
+        <span class="insight-hr-stat">谷值 <b>${minBpm}</b> bpm</span>
+      </div>`;
+    }
+  }
+
+  return `<div class="insight-card">
+    <div class="insight-title">比赛总结</div>
+    <div class="insight-sentences">
+      <p>${s1}</p>
+      ${s2 ? `<p>${s2}</p>` : ''}
+      <p>${s3}</p>
+    </div>
+    ${hrHtml}
+  </div>`;
+}
+
 // ── 比分走势图 ──
+function buildSetHRChart(points, playerName) {
+  if (!points || points.length < 2) return '';
+  const isDark = colorMode !== 'light';
+  const W = 360, H = 72;
+  const pad = { top: 10, right: 8, bottom: 18, left: 44 };
+  const innerW = W - pad.left - pad.right;
+  const innerH = H - pad.top - pad.bottom;
+
+  const bpms = points.map(p => p.bpm);
+  const minB = Math.max(40, Math.min(...bpms) - 5);
+  const maxB = Math.max(minB + 1, Math.max(...bpms) + 5);
+  const range = maxB - minB;
+
+  const ts0 = points[0].timestamp;
+  const ts1 = points[points.length - 1].timestamp;
+  const tRange = Math.max(1, ts1 - ts0);
+
+  const toX = t => +(pad.left + ((t - ts0) / tRange) * innerW).toFixed(1);
+  const toY = b => +(pad.top + (1 - (b - minB) / range) * innerH).toFixed(1);
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${toX(p.timestamp)} ${toY(p.bpm)}`).join(' ');
+  const areaD = `M${toX(points[0].timestamp)} ${H - pad.bottom} ` +
+    points.map(p => `L${toX(p.timestamp)} ${toY(p.bpm)}`).join(' ') +
+    ` L${toX(points[points.length - 1].timestamp)} ${H - pad.bottom} Z`;
+
+  const axisClr = isDark ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.38)';
+  const gridClr = isDark ? 'rgba(255,255,255,.1)'  : 'rgba(0,0,0,.1)';
+  const avgBpm  = Math.round(bpms.reduce((a, b) => a + b, 0) / bpms.length);
+
+  return `<div style="padding:6px 8px 4px">
+    <div style="font-size:10px;font-weight:600;color:rgba(255,100,100,.8);margin-bottom:3px;letter-spacing:.3px">
+      ♥ ${playerName} 心率 &nbsp;·&nbsp; 均 ${avgBpm} bpm &nbsp;·&nbsp; 峰 ${Math.max(...bpms)} bpm
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:auto;display:block">
+      <defs>
+        <linearGradient id="hrg_${avgBpm}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FF3B30" stop-opacity=".35"/>
+          <stop offset="1" stop-color="#FF3B30" stop-opacity=".03"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaD}" fill="url(#hrg_${avgBpm})"/>
+      <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${H-pad.bottom}" stroke="${gridClr}" stroke-width="1"/>
+      <line x1="${pad.left}" y1="${H-pad.bottom}" x2="${W-pad.right}" y2="${H-pad.bottom}" stroke="${gridClr}" stroke-width="1"/>
+      <path d="${pathD}" fill="none" stroke="rgba(255,80,80,.85)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      <text x="${pad.left-4}" y="${pad.top+5}" fill="${axisClr}" font-size="9" text-anchor="end">${maxB}</text>
+      <text x="${pad.left-4}" y="${H-pad.bottom+1}" fill="${axisClr}" font-size="9" text-anchor="end">${minB}</text>
+      <text x="${pad.left}" y="${H-3}" fill="${axisClr}" font-size="9">开始</text>
+      <text x="${W-pad.right}" y="${H-3}" fill="${axisClr}" font-size="9" text-anchor="end">结束</text>
+    </svg>
+  </div>`;
+}
+
 function buildChartFromEvents(evs){
   if(!evs||evs.length<2)return '';
   const isDark = colorMode !== 'light';
@@ -2836,8 +3971,8 @@ function buildChartFromEvents(evs){
 
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:auto;display:block;overflow:visible">
     <defs>
-      <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D95F4B" stop-opacity=".4"/><stop offset="1" stop-color="#D95F4B" stop-opacity=".05"/></linearGradient>
-      <linearGradient id="gb" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4A7FA8" stop-opacity=".4"/><stop offset="1" stop-color="#4A7FA8" stop-opacity=".05"/></linearGradient>
+      <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--line-a,#D95F4B)" stop-opacity=".4"/><stop offset="1" stop-color="var(--line-a,#D95F4B)" stop-opacity=".05"/></linearGradient>
+      <linearGradient id="gb" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="var(--line-b,#4A7FA8)" stop-opacity=".4"/><stop offset="1" stop-color="var(--line-b,#4A7FA8)" stop-opacity=".05"/></linearGradient>
     </defs>
     <path d="${areaA}" fill="url(#ga)"/>
     <path d="${areaB}" fill="url(#gb)"/>
@@ -2876,13 +4011,17 @@ function buildSetSections(r){
         score=[0,0];
       }
     }
-    const duration=r.setTimes&&r.setTimes.length>i+1?fmtDuration(r.setTimes[i+1]-r.setTimes[i]):'';
+    const startMs = r.setTimes && r.setTimes.length > i ? r.setTimes[i] : null;
+    const endMs   = r.setTimes && r.setTimes.length > i+1 ? r.setTimes[i+1] : null;
+    const duration = (startMs && endMs) ? fmtDuration(endMs - startMs) : '';
     return {
       index: idx,
       label: r.sport==='basketball' ? `第 ${idx} 节` : `第 ${idx} 局`,
       score,
       duration,
       events,
+      startMs,
+      endMs,
     };
   });
 }
@@ -2937,7 +4076,7 @@ function buildLogFromEvents(evs,names){
   return runs.map(run=>{
     const pts=run.totalDelta===1?'得 1 分':`连得 ${run.totalDelta} 分`;
     const score=`${run.endCumA} — ${run.endCumB}`;
-    const color=run.p===0?'#E07060':'#6090B8';
+    const color=run.p===0?'var(--line-a,#E07060)':'var(--line-b,#6090B8)';
     const pointTime=fmtPointTime(run.pointMs);
     return `<div class="log-run">
       <span class="log-who" style="color:${color}">${names[run.p]}</span>
@@ -3120,17 +4259,67 @@ function buildProgressionChart(r,setSections){
   const yFA=parseFloat(yOf(fA)),yFB=parseFloat(yOf(fB));
   const labAY=(Math.abs(yFA-yFB)<11?yFA-5:yFA+4).toFixed(1);
   const labBY=(Math.abs(yFA-yFB)<11?yFB+10:yFB+4).toFixed(1);
+
+  // ── 背景着色：谁领先就着谁的颜色 ──
+  const clrA='var(--line-a,var(--clr-a,#D95F4B))',clrB='var(--line-b,var(--clr-b,#4A7FA8))';
+  let dominanceStrips='';
+  for(let i=0;i<n-1;i++){
+    const x1=parseFloat(xOf(i)),x2=parseFloat(xOf(i+1)),w2=(x2-x1).toFixed(1);
+    if(ptsA[i]>ptsB[i]) dominanceStrips+=`<rect x="${x1.toFixed(1)}" y="${pad.top}" width="${w2}" height="${iH}" fill="${clrA}" opacity=".09"/>`;
+    else if(ptsB[i]>ptsA[i]) dominanceStrips+=`<rect x="${x1.toFixed(1)}" y="${pad.top}" width="${w2}" height="${iH}" fill="${clrB}" opacity=".07"/>`;
+  }
+
+  // ── 转折点标注：领先权交换时画小三角 ──
+  let turnMarkers='';
+  for(let i=1;i<n;i++){
+    const pl=ptsA[i-1]>ptsB[i-1]?0:ptsA[i-1]<ptsB[i-1]?1:-1;
+    const cl=ptsA[i]>ptsB[i]?0:ptsA[i]<ptsB[i]?1:-1;
+    if(pl!==-1&&cl!==-1&&pl!==cl){
+      const tx=parseFloat(xOf(i)),ty=pad.top-1,s=4;
+      const fill=cl===0?'var(--line-a,var(--clr-a,#D95F4B))':'var(--line-b,var(--clr-b,#4A7FA8))';
+      turnMarkers+=`<polygon points="${tx},${ty+s} ${tx-s},${ty-s} ${tx+s},${ty-s}" fill="${fill}" opacity=".75"/>`;
+    }
+  }
+
+  // ── 心率曲线叠加（次 Y 轴，归一化到相同高度）──
+  let hrPath='';
+  const hrData=r.heartRateTimeline||[];
+  if(hrData.length>=3){
+    const matchStart=evs[0]?.t||(r.date-(r.duration||0));
+    const matchEnd  =evs[evs.length-1]?.t||r.date;
+    const matchSpan =matchEnd-matchStart||1;
+    const bpms=hrData.map(s=>s.bpm).filter(b=>b>30&&b<250);
+    if(bpms.length>=3){
+      const hrMin=Math.min(...bpms)-5, hrMax=Math.max(...bpms)+5;
+      const hrSpan=hrMax-hrMin||1;
+      const validSamples=hrData.filter(s=>s.bpm>30&&s.bpm<250);
+      const hrXY=validSamples.map(s=>{
+        const t=s.timestamp;
+        const frac=Math.max(0,Math.min(1,(t-matchStart)/matchSpan));
+        const x=(pad.left+frac*iW).toFixed(1);
+        const y=(pad.top+iH*(1-(s.bpm-hrMin)/hrSpan)).toFixed(1);
+        return {x,y};
+      });
+      if(hrXY.length>=2){
+        hrPath=`<path d="${hrXY.map((p,i)=>`${i===0?'M':'L'}${p.x} ${p.y}`).join(' ')}" fill="none" stroke="#34C759" stroke-width="1.5" stroke-linejoin="round" opacity=".65" stroke-dasharray="4,2"/>`;
+      }
+    }
+  }
+
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:auto;display:block;overflow:visible">
+    ${dominanceStrips}
     <path d="${fillA}" class="prog-fill-a"/>
     <path d="${fillB}" class="prog-fill-b"/>
     ${boundLines}
     <line x1="${pad.left}" y1="${H-pad.bottom}" x2="${W-pad.right}" y2="${H-pad.bottom}" stroke="${p_gridClr}" stroke-width="1"/>
     <path d="${pathA}" fill="none" stroke-width="2" stroke-linejoin="round" class="prog-line-a"/>
     <path d="${pathB}" fill="none" stroke-width="2" stroke-linejoin="round" class="prog-line-b"/>
+    ${hrPath}
+    ${turnMarkers}
     <text x="${pad.left}" y="${H-6}" fill="${p_axisClr}" font-size="9">开始</text>
     <text x="${(W-pad.right-2).toFixed(1)}" y="${H-6}" fill="${p_axisClr}" font-size="9" text-anchor="end">结束</text>
-    <text x="${(W-pad.right+3)}" y="${labAY}" fill="#D95F4B" font-size="9" opacity=".9">${fA}</text>
-    <text x="${(W-pad.right+3)}" y="${labBY}" fill="#4A7FA8" font-size="9" opacity=".9">${fB}</text>
+    <text x="${(W-pad.right+3)}" y="${labAY}" fill="var(--line-a,var(--clr-a,#D95F4B))" font-size="9" opacity=".9">${fA}</text>
+    <text x="${(W-pad.right+3)}" y="${labBY}" fill="var(--line-b,var(--clr-b,#4A7FA8))" font-size="9" opacity=".9">${fB}</text>
   </svg>`;
 }
 
@@ -3156,8 +4345,8 @@ function buildPhaseSection(r,setSections){
       inner+=`<div class="phase-row">
         <span class="phase-lbl">${labels[i]}</span>
         <div class="phase-bar-outer">
-          <div style="width:${pA}%;height:100%;background:var(--clr-a,#D95F4B)"></div>
-          <div style="width:${100-pA}%;height:100%;background:var(--clr-b,#4A7FA8)"></div>
+          <div style="width:${pA}%;height:100%;background:var(--line-a,var(--clr-a,#D95F4B))"></div>
+          <div style="width:${100-pA}%;height:100%;background:var(--line-b,var(--clr-b,#4A7FA8))"></div>
         </div>
         <span class="phase-score"><span class="sa">${a}</span><span style="color:${sepClr}"> : </span><span class="sb">${b}</span></span>
       </div>`;
@@ -3202,8 +4391,8 @@ function buildCriticalSection(r,names){
     return `<div class="crit-row">
       <span class="crit-lbl">${cat.lbl}</span>
       <div class="crit-bar-outer">
-        <div style="width:${pA}%;height:100%;background:var(--clr-a,#D95F4B)"></div>
-        <div style="width:${100-pA}%;height:100%;background:var(--clr-b,#4A7FA8)"></div>
+        <div style="width:${pA}%;height:100%;background:var(--line-a,var(--clr-a,#D95F4B))"></div>
+        <div style="width:${100-pA}%;height:100%;background:var(--line-b,var(--clr-b,#4A7FA8))"></div>
       </div>
       <span class="crit-score"><span class="sa">${cat.a}</span><span style="color:${sepClr}"> : </span><span class="sb">${cat.b}</span></span>
     </div>`;
@@ -3268,17 +4457,17 @@ function clone(o){return JSON.parse(JSON.stringify(o));}
 // ══════════════════════════════════════════
 const THEMES = [
   { id:'default',    name:'极简',   bg:'#111111', a:'#D95F4B', b:'#4A7FA8', accent:'#0A84FF' },
-  { id:'tennis',     name:'网球',   bg:'#0C2020', a:'#1E5C38', b:'#0E3030', accent:'#C8E040' },
-  { id:'basketball', name:'篮球',   bg:'#0D1520', a:'#BB5010', b:'#142038', accent:'#F08020' },
-  { id:'badminton',  name:'羽毛球', bg:'#0F1F3D', a:'#1A50A8', b:'#0E2A70', accent:'#4A9FFF' },
+  { id:'tennis',     name:'网球',   bg:'#0C2020', a:'#1E5C38', b:'#0E3030', accent:'#C8E040', lineA:'#40D878', lineB:'#C8E040' },
+  { id:'basketball', name:'篮球',   bg:'#0D1520', a:'#BB5010', b:'#142038', accent:'#F08020', lineA:'#FF8040', lineB:'#4096E0' },
+  { id:'badminton',  name:'羽毛球', bg:'#0F1F3D', a:'#1A50A8', b:'#0E2A70', accent:'#4A9FFF', lineA:'#5A9FFF', lineB:'#20D8FF' },
   { id:'flame',      name:'烈焰',   bg:'#0D1829', a:'#B81818', b:'#0F2050', accent:'#E02828' },
-  { id:'football',   name:'足球',   bg:'#0F1E12', a:'#1D4A22', b:'#152E18', accent:'#C8CC70' },
-  { id:'neon',       name:'霓虹',   bg:'#0D1F1F', a:'#0E3838', b:'#0A2828', accent:'#BADC20' },
-  { id:'aurora',     name:'极光',   bg:'#080E18', a:'#0E5858', b:'#083040', accent:'#20D0C0' },
+  { id:'football',   name:'足球',   bg:'#0F1E12', a:'#1D4A22', b:'#152E18', accent:'#C8CC70', lineA:'#50D060', lineB:'#C8D840' },
+  { id:'neon',       name:'霓虹',   bg:'#0D1F1F', a:'#0E3838', b:'#0A2828', accent:'#BADC20', lineA:'#20E8A0', lineB:'#D8E020' },
+  { id:'aurora',     name:'极光',   bg:'#080E18', a:'#0E5858', b:'#083040', accent:'#20D0C0', lineA:'#30E0D0', lineB:'#4090FF' },
   { id:'violet',     name:'紫夜',   bg:'#100D1E', a:'#5A1E80', b:'#2A0E50', accent:'#9B50FF' },
   { id:'rose',       name:'玫瑰',   bg:'#1A0A10', a:'#982040', b:'#5A0E20', accent:'#FF5878' },
-  { id:'gold',       name:'金色',   bg:'#141008', a:'#8A6000', b:'#4A3200', accent:'#F0B820' },
-  { id:'bw',         name:'黑白',   bg:'#0A0A0A', a:'#5A5A5A', b:'#1A1A1A', accent:'#E0E0E0' },
+  { id:'gold',       name:'金色',   bg:'#141008', a:'#8A6000', b:'#4A3200', accent:'#F0B820', lineA:'#F0B820', lineB:'#E07828' },
+  { id:'bw',         name:'黑白',   bg:'#0A0A0A', a:'#5A5A5A', b:'#1A1A1A', accent:'#E0E0E0', lineA:'#D0D0D0', lineB:'#909090' },
 ];
 
 let currentTheme = localStorage.getItem('sb_theme') || 'default';
@@ -3304,6 +4493,12 @@ function applyTheme(id) {
   const t = THEMES.find(x => x.id === id);
   const nameEl = document.getElementById('curThemeName');
   if (nameEl && t) nameEl.textContent = t.name;
+  // 图表亮色覆盖：--line-a/b 与面板底色解耦，保证走势图清晰可读
+  const root = document.documentElement;
+  if (t?.lineA) root.style.setProperty('--line-a', t.lineA);
+  else root.style.removeProperty('--line-a');
+  if (t?.lineB) root.style.setProperty('--line-b', t.lineB);
+  else root.style.removeProperty('--line-b');
 }
 
 function renderThemeGrid() {
@@ -3390,6 +4585,60 @@ function initSwipeDelete(){
 }
 
 // ══════════════════════════════════════════
+// Mac 同步导出（原始格式，保留全部字段含心率）
+function exportForMacSync(){
+  let all=[];
+  try{all=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(e){}
+  if(!all.length){alert('暂无历史记录可导出');return;}
+  const dateStr=new Date().toISOString().slice(0,10);
+  const filename=`scoreboard_mac_sync_${dateStr}.json`;
+  _triggerExportShare(JSON.stringify(all,null,2),filename,'同步到 Mac');
+}
+
+// 单条记录导出
+function exportSingleMatch(id){
+  let all=[];
+  try{all=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(e){}
+  const r=all.find(x=>x.id===id);
+  if(!r){alert('找不到该记录');return;}
+  const d=new Date(r.date);
+  const dateStr=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const filename=`scoreboard_${(r.names||[]).join('vs')}_${dateStr}.json`;
+  const json=JSON.stringify(r,null,2);
+  _triggerExportShare(json,filename,'单条比赛记录');
+}
+
+// 共享导出分发（iOS 分享表单 / 下载 / 文本模态框）
+function _triggerExportShare(json,filename,title){
+  if(typeof APP_PLATFORM!=='undefined' && APP_PLATFORM==='ios'){
+    if(navigator.share && window.File){
+      const file=new File([json],filename,{type:'application/json'});
+      try{
+        const canShare=!navigator.canShare||navigator.canShare({files:[file]});
+        if(canShare){
+          navigator.share({title,text:filename,files:[file]}).catch(()=>{});
+          return;
+        }
+      }catch(e){}
+    }
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+    return;
+  }
+  // 桌面端
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
 // 导出数据
 // ══════════════════════════════════════════
 function exportHistory(){
@@ -3680,8 +4929,25 @@ function seedDemoHistory(){
     return{evs,elapsed};
   }
 
+  // 生成心率时间线（模拟运动时 Apple Watch 采集的心率）
+  function genHR(startMs,durationMs,rng){
+    const samples=[];
+    let t=startMs+20000; // 热身 20 秒后开始爬升
+    let hr=115;
+    while(t<startMs+durationMs-15000){
+      const prog=(t-startMs)/durationMs;
+      // 前 15% 快速升温；中段维持高区间；最后 10% 略微回落
+      const target=prog<0.15?120+prog*280:prog<0.9?155+rng()*22:158-(prog-0.9)*80;
+      hr=hr*0.78+target*0.22+(rng()-0.5)*7;
+      hr=Math.max(95,Math.min(198,hr));
+      samples.push({timestamp:t,bpm:Math.round(hr)});
+      t+=Math.round(3500+rng()*3000);
+    }
+    return samples;
+  }
+
   // 生成一场完整比赛记录
-  function genMatch({id,sport,names,setScores,daysAgo}){
+  function genMatch({id,sport,names,setScores,daysAgo,withHR}){
     const rng=mkRng(id);
     const now=Date.now()-daysAgo*86400000;
     let cumA=0,cumB=0,elapsed=0;
@@ -3697,9 +4963,12 @@ function seedDemoHistory(){
     const setWinsB=setScores.filter(([a,b])=>b>a).length;
     const winner=setWinsA>=setWinsB?0:1; // basketball uses score
     const ptWin=sport==='tabletennis'?11:sport==='badminton'?21:null;
+    const heartRateTimeline=withHR?genHR(now,elapsed,rng):[];
     return{id,date:now,sport,names,winner,duration:elapsed,
       rules:{ptWin,setWin:Math.ceil(setScores.length/2),totalSets:setScores.length},
-      sets:setScoresSaved,setScores:setScoresSaved,setTimes,events:allEvs,_saved:true,_demo:true};
+      sets:setScoresSaved,setScores:setScoresSaved,setTimes,events:allEvs,
+      heartRateTimeline,hrPlayerIdx:withHR?0:null,
+      _saved:true,_demo:true};
   }
 
   // 篮球场专属生成（用累计分制）
@@ -3739,13 +5008,13 @@ function seedDemoHistory(){
 
   const demos=[
     genMatch({id:1748800000000,sport:'badminton',names:['张三','李四'],
-      setScores:[[21,15],[21,18]],daysAgo:1}),
+      setScores:[[21,15],[21,18]],daysAgo:1,withHR:true}),
     genMatch({id:1748700000000,sport:'badminton',names:['张三','李四'],
-      setScores:[[18,21],[21,14],[21,19]],daysAgo:3}),
+      setScores:[[18,21],[21,14],[21,19]],daysAgo:3,withHR:true}),
     genMatch({id:1748600000000,sport:'tabletennis',names:['小明','小红'],
-      setScores:[[11,7],[8,11],[11,9],[11,6]],daysAgo:5}),
+      setScores:[[11,7],[8,11],[11,9],[11,6]],daysAgo:5,withHR:true}),
     genMatch({id:1748500000000,sport:'badminton',names:['张三','李四'],
-      setScores:[[15,21],[18,21]],daysAgo:7}),
+      setScores:[[15,21],[18,21]],daysAgo:7,withHR:true}),
     genMatch({id:1748400000000,sport:'tabletennis',names:['小明','小红'],
       setScores:[[11,8],[9,11],[7,11],[11,9],[8,11]],daysAgo:9}),
     genBBMatch({id:1748300000000,names:['雷霆队','闪电队'],
@@ -3764,6 +5033,22 @@ function seedDemoHistory(){
 // 初始化
 updateRulesUI();
 applyTheme(currentTheme);
+loadProfiles();
+document.getElementById('inputA')?.addEventListener('change', cacheCurrentSetupNames);
+document.getElementById('inputB')?.addEventListener('change', cacheCurrentSetupNames);
+document.getElementById('inputA')?.addEventListener('blur', cacheCurrentSetupNames);
+document.getElementById('inputB')?.addEventListener('blur', cacheCurrentSetupNames);
+initWatchHR();
+consumePendingWatchMatches();
+schedulePendingWatchMatchRetries();
+// 回到前台时再次拉取手表离线记录（transferUserInfo 队列）
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    consumePendingWatchMatches();
+    schedulePendingWatchMatchRetries();
+    syncProfilesToWatch();   // 前台时重推档案名，确保手表设置页有最新名单
+  }
+});
 applyColorMode(colorMode);
 applyBackButtonVisibility();
 renderThemeGrid();
@@ -3773,7 +5058,12 @@ renderBackButtonToggle();
 renderMenuButton();
 seedDemoHistory();
 installEdgeSwipeBack();
-setInterval(()=>{ if(S&&!S.pausedAt&&S.winner===null) renderMenuButton(); }, 1000);
+setInterval(()=>{
+  if(S&&S.winner===null){
+    if(!S.pausedAt) renderMenuButton();
+    syncWatchMatchState();
+  }
+}, 1000);
 if (APP_PLATFORM !== 'desktop') {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations()
