@@ -5,10 +5,8 @@ class WorkoutManager: NSObject, ObservableObject {
     let healthStore = HKHealthStore()
     private var session: HKWorkoutSession?
     private var builder: HKLiveWorkoutBuilder?
-    private var ticker: Timer?
 
     @Published var heartRate: Double = 0
-    @Published var elapsedSeconds: Int = 0
     @Published var isActive = false
     @Published var sportName = "比赛中"
 
@@ -51,9 +49,7 @@ class WorkoutManager: NSObject, ObservableObject {
                 self.builder?.beginCollection(withStart: now) { _, _ in }
                 DispatchQueue.main.async {
                     self.isActive = true
-                    self.elapsedSeconds = 0
                     self.heartRate = 0
-                    self.startTicker()
                 }
             } catch {
                 print("[WorkoutManager] start error: \(error)")
@@ -62,21 +58,14 @@ class WorkoutManager: NSObject, ObservableObject {
     }
 
     // MARK: - 结束
+    /// 让 workout session 收尾。会发起 end()，真正的 endCollection/finishWorkout
+    /// 在 didChangeTo .ended 回调里完成；这里不直接置空 session/builder，
+    /// 否则系统稍后调用的回调拿不到对象，训练记录会"烂尾"。
     func stop() {
-        session?.end()
-        session = nil
-        builder = nil
-        ticker?.invalidate(); ticker = nil
+        guard let session else { return }
+        session.end()
         DispatchQueue.main.async {
             self.isActive = false
-            self.elapsedSeconds = 0
-        }
-    }
-
-    // MARK: - 内部
-    private func startTicker() {
-        ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            self?.elapsedSeconds += 1
         }
     }
 
@@ -111,7 +100,12 @@ extension WorkoutManager: HKWorkoutSessionDelegate {
                         date: Date) {
         if to == .ended {
             builder?.endCollection(withEnd: date) { [weak self] _, _ in
-                self?.builder?.finishWorkout { _, _ in }
+                self?.builder?.finishWorkout { [weak self] _, _ in
+                    DispatchQueue.main.async {
+                        self?.session = nil
+                        self?.builder = nil
+                    }
+                }
             }
         }
     }
