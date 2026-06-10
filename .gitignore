@@ -8,3 +8,7 @@ android/
 *.asar.bak
 backups/
 .DS_Store
+
+# 临时/日志/备份
+*.log
+*.bak
