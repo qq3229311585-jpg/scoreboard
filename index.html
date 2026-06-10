@@ -2562,7 +2562,7 @@ function saveMatch(){
   if(CFG.sport==='basketball') ensureBasketballSetData();
   const record={
     id:   Date.now(),
-    date: Date.now(),
+    date: S.startTime || Date.now(),
     sport: CFG.sport,
     names: [...CFG.names],
     rules: { ptWin:CFG.ptWin, setWin:CFG.setWin, totalSets:CFG.totalSets },
@@ -2693,14 +2693,6 @@ function getActiveProfile(){
 
 function setActiveProfile(id){
   activeProfileId=id;
-  saveProfilesToStorage();
-  renderProfileScreen();
-}
-
-function deleteProfile(id){
-  if(profiles.length<=1)return;
-  profiles=profiles.filter(p=>p.id!==id);
-  if(activeProfileId===id) activeProfileId=profiles[0]?.id||null;
   saveProfilesToStorage();
   renderProfileScreen();
 }
@@ -3281,6 +3273,7 @@ function menuFinish(){
   closeMenu();
   clearPendingScore(false);
   if(!S||S.winner!==null) return;
+  if(!confirm('提前结束比赛？当前局面将被记为最终结果。')) return;
 
   if(CFG.sport==='basketball'){
     const [a,b]=[S.score[0],S.score[1]];
@@ -3318,14 +3311,14 @@ function menuFinish(){
   alert('当前完全平分，不能直接结束比赛。');
 }
 function menuUndo(){closeMenu();clearPendingScore(false);if(!H.length)return;S=H.pop();document.getElementById('overlay').hidden=true;render();}
-function menuReset(){closeMenu();clearPendingScore(false);S=mkState();H=[];document.getElementById('overlay').hidden=true;render();}
+function menuReset(){closeMenu();clearPendingScore(false);if(!confirm('重置比赛？当前所有记分数据将清空，无法恢复。'))return;S=mkState();H=[];document.getElementById('overlay').hidden=true;render();}
 function menuNextQuarter(){
   if(!S||S.winner!==null||CFG.sport!=='basketball')return;
   closeMenu();
   H.push(clone(S));
   const q=S.quarter||1;
   if(q>=4){
-    // 第4节结束：平局进加时，否则直接判胜
+    // 第4节（含加时节）结束：非平分直接判胜，平分才进加时
     if(S.score[0]!==S.score[1]){
       finalizeCurrentMatch(S.score[0]>S.score[1]?0:1);
       return;
@@ -3333,7 +3326,7 @@ function menuNextQuarter(){
   }
   if(!S.setTimes)S.setTimes=[S.startTime];
   S.setTimes.push(Date.now());
-  S.quarter=(q>=4)?q+1:q+1; // 4节后进加时（OT）
+  S.quarter=q+1;
   render();
 }
 function menuBack(){
@@ -4888,7 +4881,7 @@ function importHistory(event){
       const existingIds=new Set(existing.map(r=>r.id));
       const toAdd=incoming.filter(r=>r.id&&!existingIds.has(r.id));
       if(!toAdd.length){alert('没有发现新记录（可能已全部导入过）');return;}
-      const merged=[...toAdd,...existing].sort((a,b)=>b.date-a.date).slice(0,200);
+      const merged=[...toAdd,...existing].sort((a,b)=>b.date-a.date).slice(0,100);
       localStorage.setItem('sb_history',JSON.stringify(merged));
       alert(`成功导入 ${toAdd.length} 条记录`);
       if(typeof renderHistoryList==='function') renderHistoryList();
@@ -5059,7 +5052,7 @@ renderMenuButton();
 seedDemoHistory();
 installEdgeSwipeBack();
 setInterval(()=>{
-  if(S&&S.winner===null){
+  if(currentScreen==='game'&&S&&S.winner===null){
     if(!S.pausedAt) renderMenuButton();
     syncWatchMatchState();
   }
