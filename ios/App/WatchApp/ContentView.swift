@@ -160,6 +160,13 @@ struct MatchSettingsView: View {
                                        value: $totalSets)
                         }
                     }
+                    if sport == "tennis" {
+                        Text("简化版网球：先赢 N 局且领先 2 局。无 15/30/40 与抢七。")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.white.opacity(0.45))
+                            .padding(.horizontal, 6)
+                            .multilineTextAlignment(.leading)
+                    }
                 }
 
                 // ── 开始按钮 ──
