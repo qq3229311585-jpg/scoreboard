@@ -2682,10 +2682,8 @@ function saveProfilesToStorage(){
 async function syncProfilesToWatch() {
   if (typeof WatchPlugin === 'undefined') return;
   try {
-    const profileNames = (profiles || []).map(p => normalizeWatchName(p.name)).filter(Boolean);
-    const historyNames = getKnownWatchNames();
-    const merged = [...new Set([...profileNames, ...historyNames])].slice(0, 60);
-    await WatchPlugin.syncProfiles({ names: merged });
+    const names = getKnownWatchNames();
+    await WatchPlugin.syncProfiles({ names });
   } catch(e) { /* 手表不在线时静默失败 */ }
 }
 
