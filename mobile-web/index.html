@@ -2543,16 +2543,16 @@ function finalizeCurrentMatch(winner){
   render();
 }
 
-// 历史最多保存 100 条，超过会从尾部丢弃旧记录。接近上限时提醒用户导出/同步到 Mac。
+// 历史最多保存 300 条，超过会从尾部丢弃旧记录。接近上限时提醒用户导出/同步到 Mac。
 function maybeWarnHistoryNearLimit(count){
   try{
     const lastWarn = Number(localStorage.getItem('sb_history_warn_ts')||0);
     if(Date.now() - lastWarn < 24*60*60*1000) return; // 24h 内只提醒一次
     localStorage.setItem('sb_history_warn_ts', String(Date.now()));
-    const remaining = Math.max(0, 100 - count);
+    const remaining = Math.max(0, 300 - count);
     const msg = remaining === 0
-      ? '历史记录已达 100 条上限，再保存新比赛会覆盖最旧的记录。建议先导出或同步到 Mac。'
-      : `历史记录接近上限（${count}/100），仅剩 ${remaining} 条空位。建议尽快导出或同步到 Mac。`;
+      ? '历史记录已达 300 条上限，再保存新比赛会覆盖最旧的记录。建议先导出或同步到 Mac。'
+      : `历史记录接近上限（${count}/300），仅剩 ${remaining} 条空位。建议尽快导出或同步到 Mac。`;
     setTimeout(()=>alert(msg), 400);
   }catch(_){}
 }
@@ -2591,8 +2591,8 @@ function saveMatch(){
   try{
     const all=JSON.parse(localStorage.getItem('sb_history')||'[]');
     all.unshift(record);
-    if(all.length>=95 && all.length<=100) maybeWarnHistoryNearLimit(all.length);
-    if(all.length>100)all.length=100;
+    if(all.length>=280 && all.length<=300) maybeWarnHistoryNearLimit(all.length);
+    if(all.length>300)all.length=300;
     localStorage.setItem('sb_history',JSON.stringify(all));
     S._saved=true; // 移到存档成功后再标记，防止报错时锁死
     // 异步拉取 HealthKit 心率作为兜底（Watch 直流时已有数据可跳过）
@@ -3059,8 +3059,8 @@ function persistWatchMatchRecord(record) {
     } else {
       all.unshift(normalized);
     }
-    if (all.length>=95 && all.length<=100) maybeWarnHistoryNearLimit(all.length);
-    if (all.length > 100) all.length = 100;
+    if (all.length>=280 && all.length<=300) maybeWarnHistoryNearLimit(all.length);
+    if (all.length > 300) all.length = 300;
     localStorage.setItem('sb_history', JSON.stringify(all));
     if (currentScreen === 'history') renderHistory();
     if (currentScreen === 'detail' && currentDetailId === normalized.id) renderDetail(normalized);
@@ -4881,7 +4881,7 @@ function importHistory(event){
       const existingIds=new Set(existing.map(r=>r.id));
       const toAdd=incoming.filter(r=>r.id&&!existingIds.has(r.id));
       if(!toAdd.length){alert('没有发现新记录（可能已全部导入过）');return;}
-      const merged=[...toAdd,...existing].sort((a,b)=>b.date-a.date).slice(0,100);
+      const merged=[...toAdd,...existing].sort((a,b)=>b.date-a.date).slice(0,300);
       localStorage.setItem('sb_history',JSON.stringify(merged));
       alert(`成功导入 ${toAdd.length} 条记录`);
       if(typeof renderHistoryList==='function') renderHistoryList();
