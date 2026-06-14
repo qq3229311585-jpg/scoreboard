@@ -2105,8 +2105,10 @@ function clearPendingScore(shouldRender=true){
   }
   if(shouldRender&&S&&S.winner===null) render();
 }
-function queueScore(actionKey, hint, applyFn){
-  if(!antiMistouch){
+function queueScore(actionKey, hint, applyFn, bypass){
+  // 手表来的指令已经在表上做过双击确认，bypass=true 直接加分；
+  // 否则手表双击 + 手机防误触双击 = 用户得在表上点 4 下才记 1 分。
+  if(!antiMistouch || bypass){
     applyFn();
     return;
   }
@@ -2221,17 +2223,12 @@ async function startGame() {
   ];
   rememberWatchNames(CFG.names);
   syncProfilesToWatch();
-  const shouldUseWatch = await shouldRecordHeartRateForCurrentMatch();
-  if (shouldUseWatch) {
-    const ready = await ensureWatchReadyForMatch();
-    if (!ready) return;
-  }
   clearPendingScore(false);
   S=mkState(); H=[]; render();
   navTo('game');
-  if (shouldUseWatch) {
-    await startWatchWorkout(); // 通知 Apple Watch 开始记录心率
-  }
+  // 手表只要连着就让它进比分页（镜像记分）+ 采心率，与"这场记不记心率"解耦。
+  // 手表不可用时 startWatchWorkout 内部会自动跳过；心率是否归属/保存由 saveMatch 决定。
+  await startWatchWorkout();
 }
 
 // ══════════════════════════════════════════
@@ -2264,7 +2261,7 @@ function recordEvent(p, delta, nextScore, setIndex) {
   });
 }
 
-function addPt(p) {
+function addPt(p, opts) {
   if(!S||S.winner!==null) return;
   if(CFG.sport==='basketball') return;
   if(blockScoreWhilePaused()) return;
@@ -2277,9 +2274,9 @@ function addPt(p) {
     recordEvent(p, 1, [before[0] + (p===0 ? 1 : 0), before[1] + (p===1 ? 1 : 0)], setIndex);
     render();
     emitScoreFeedback(getCurrentSetIndex()!==beforeSetIndex || S.winner!==null ? 'set' : 'score');
-  });
+  }, opts?.bypassAntiMistouch);
 }
-function addBB(p,n) {
+function addBB(p,n,opts) {
   if(!S||S.winner!==null) return;
   if(blockScoreWhilePaused()) return;
   queueScore(`bb-${p}-${n}`, `为${CFG.names[p]}加${n}分`, ()=>{
@@ -2289,7 +2286,7 @@ function addBB(p,n) {
     recordEvent(p, n, [S.score[0], S.score[1]], getCurrentSetIndex());
     render();
     emitScoreFeedback(S.quarter!==beforeQuarter ? 'set' : 'score');
-  });
+  }, opts?.bypassAntiMistouch);
 }
 function getCurrentSetIndex(){
   if(!S) return 1;
@@ -2576,14 +2573,18 @@ function saveMatch(){
     heartRateTimeline: liveHRTimeline.length ? [...liveHRTimeline] : [],
     hrPlayerIdx: null,
     hrProfileId: null,
+    calories: null,
   };
   rememberWatchNames(record.names||[]);
-  // 活跃档案与球员名匹配 → 确定心率归属
-  const _ap=getActiveProfile();
-  if(_ap && _ap.hrEnabled){
-    const _pidx=CFG.names.findIndex(n=>n===_ap.name);
-    record.hrPlayerIdx=_pidx>=0?_pidx:0; // 找不到名字时默认归 0 号球员（持机方）
-    record.hrProfileId=_ap.id;
+  // 心率归属：归"已开启心率且名字在场上"的那个档案（不死盯激活档案）
+  const _hp=hrProfileForCurrentMatch();
+  if(_hp){
+    const _pidx=CFG.names.findIndex(n=>n===_hp.name);
+    record.hrPlayerIdx=_pidx>=0?_pidx:0; // 理论上必匹配；兜底归 0 号
+    record.hrProfileId=_hp.id;
+  } else {
+    // 这场没有"开心率监测且名字在场上"的人 → 不归属、不保存手表采到的心率
+    record.heartRateTimeline=[];
   }
   stopWatchWorkout(); // 通知手表停止运动，保存数据到健身 App
   liveHRTimeline = [];
@@ -2599,7 +2600,10 @@ function saveMatch(){
     const _matchId=record.id;
     const _startMs=S.startTime||Date.now()-getElapsedMs();
     const _endMs=Date.now();
-    if(!record.heartRateTimeline.length) setTimeout(()=>fetchAndStoreHeartRate(_matchId,_startMs,_endMs),300);
+    // 仅在该记心率（有归属）时才从 HealthKit 兜底拉取，避免给不该记的比赛补心率
+    if(record.hrProfileId!=null && !record.heartRateTimeline.length) setTimeout(()=>fetchAndStoreHeartRate(_matchId,_startMs,_endMs),300);
+    // 有心率归属的比赛，额外查该时段消耗的卡路里
+    if(record.hrProfileId!=null) setTimeout(()=>fetchAndStoreActiveEnergy(_matchId,_startMs,_endMs),350);
   }catch(e){}
 }
 
@@ -2664,6 +2668,9 @@ function cacheCurrentSetupNames(){
 
 function loadProfiles(){
   try{ profiles=JSON.parse(localStorage.getItem('sb_profiles')||'[]'); }catch(e){ profiles=[]; }
+  // 心率监测全局唯一：清理历史可能遗留的多个开启，只保留第一个
+  let hrSeen=false;
+  profiles.forEach(p=>{ if(p.hrEnabled){ if(hrSeen) p.hrEnabled=false; else hrSeen=true; } });
   activeProfileId=parseInt(localStorage.getItem('sb_active_profile'))||null;
   if(profiles.length&&!profiles.find(p=>p.id===activeProfileId)){
     activeProfileId=profiles[0].id;
@@ -2697,14 +2704,41 @@ function setActiveProfile(id){
   renderProfileScreen();
 }
 
+// 开/关某人的心率监测。全局唯一：开启一个会自动关掉其他所有人——
+// 心率来自唯一的手表佩戴者，同一时间只能有一个人被监测。
 function toggleProfileHR(id){
   const p=profiles.find(x=>x.id===id);
   if(!p) return;
-  p.hrEnabled=!p.hrEnabled;
+  const next=!p.hrEnabled;
+  if(next) profiles.forEach(x=>{ x.hrEnabled=false; });  // 唯一：先全部关掉
+  p.hrEnabled=next;
   saveProfilesToStorage();
   renderProfileScreen();
   // 用户刚刚开启心率 → 立即请求授权，让系统弹出权限对话框
   if(p.hrEnabled) requestHRAuthorization();
+}
+
+// 保存某档案的个人心率指标（年龄/静息心率），用于个性化心率区间
+function savePersonHRMetric(id, key, val){
+  const p=profiles.find(x=>x.id===id);
+  if(!p) return;
+  const n=parseInt(val,10);
+  if(key==='age')       p.age=(n>=5&&n<=110)?n:null;
+  if(key==='restingHR') p.restingHR=(n>=30&&n<=120)?n:null;
+  saveProfilesToStorage();
+}
+
+// 标记"本人"档案（iPhone 主人本人）。全局唯一。
+// 唯一用途：本人档案的年龄/静息心率自动用本机 HealthKit 数据填充。
+// 把手表借给别人用时，别人的档案别标本人——要手填他自己的年龄，否则会套用你的年龄算错区间。
+// 注意：本人标记只影响"健康数据来源"，不影响"心率记给谁"（那由心率监测+名字匹配决定）。
+function toggleProfileSelf(id){
+  const p=profiles.find(x=>x.id===id);
+  if(!p) return;
+  const next=!p.isSelf;
+  profiles.forEach(x=>{ x.isSelf=false; });
+  p.isSelf=next;
+  saveProfilesToStorage();
 }
 
 async function requestHRAuthorization(){
@@ -2790,9 +2824,9 @@ function renderProfileScreen(){
   list.innerHTML=`<div class="settings-card" style="padding:0;overflow:hidden">`+
     profiles.map((p,i)=>{
       const color=PROFILE_COLORS[i%PROFILE_COLORS.length];
-      const isActive=p.id===activeProfileId;
       const initial=p.name.trim().charAt(0)||'?';
       const isSelected=profileDeleteSelected.has(p.id);
+      const hrTag = p.hrEnabled?`<span class="profile-active-tag" style="background:rgba(255,59,48,.15);color:#FF3B30">❤️ 心率监测</span>`:'';
       if(profileEditMode){
         // 管理模式：多选删除
         return `<div class="profile-item${isSelected?' pf-del-selected':''}"
@@ -2800,22 +2834,17 @@ function renderProfileScreen(){
           <div class="profile-del-checkbox${isSelected?' checked':''}">${isSelected?'✓':''}</div>
           <div class="profile-avatar" style="background:${color}">${initial}</div>
           <div class="profile-info" style="flex:1">
-            <div class="profile-name-row"><span>${p.name}</span>${isActive?`<span class="profile-active-tag">使用中</span>`:''}</div>
-            <div class="profile-sub">心率：${p.hrEnabled?'已开启':'未开启'}</div>
+            <div class="profile-name-row"><span>${p.name}</span>${hrTag}</div>
+            <div class="profile-sub">心率监测：${p.hrEnabled?'已开启':'未开启'}</div>
           </div>
         </div>`;
       } else {
-        // 正常模式：点击进详情页修改设置
-        // 点头像切换"使用中"；点右侧区域进详情
-        return `<div class="profile-item${isActive?' pf-active':''}">
-          <div class="profile-avatar" style="background:${color};cursor:pointer"
-               onclick="setActiveProfile(${p.id})" title="设为当前使用者">${initial}</div>
+        // 正常模式：点击进详情页修改设置（含开关心率监测）
+        return `<div class="profile-item">
+          <div class="profile-avatar" style="background:${color}">${initial}</div>
           <div class="profile-info" style="flex:1;cursor:pointer" onclick="navToPerson(${p.id})">
-            <div class="profile-name-row">
-              <span>${p.name}</span>
-              ${isActive?`<span class="profile-active-tag">使用中</span>`:`<span style="font-size:11px;color:rgba(255,255,255,.28)">点头像切换</span>`}
-            </div>
-            <div class="profile-sub">心率记录：${p.hrEnabled?'已开启':'未开启'} · 点击查看详情</div>
+            <div class="profile-name-row"><span>${p.name}</span>${hrTag}</div>
+            <div class="profile-sub">心率监测：${p.hrEnabled?'已开启':'未开启'} · 点击查看详情</div>
           </div>
           <span style="color:rgba(255,255,255,.25);font-size:18px;pointer-events:none">›</span>
         </div>`;
@@ -2844,9 +2873,9 @@ function renderPersonScreen(id){
       <div class="profile-avatar" style="width:60px;height:60px;font-size:22px;background:${color}">${initial}</div>
       <div style="flex:1">
         <div id="personNameDisplay" style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">${p.name}</div>
-        ${isActive
-          ? `<div style="font-size:12px;color:var(--accent,#0A84FF);font-weight:600">✓ 使用中</div>`
-          : `<div style="font-size:12px;color:rgba(255,255,255,.3)">返回列表点头像可切换</div>`
+        ${p.hrEnabled
+          ? `<div style="font-size:12px;color:#FF3B30;font-weight:600">❤️ 心率监测中</div>`
+          : `<div style="font-size:12px;color:rgba(255,255,255,.3)">心率监测未开启</div>`
         }
       </div>
     </div>
@@ -2862,16 +2891,43 @@ function renderPersonScreen(id){
       </div>
     </div>
 
-    <!-- 心率开关 -->
+    <!-- 心率监测 -->
     <div class="settings-card" style="margin-top:8px">
       <div class="settings-row">
         <div class="settings-copy">
-          <div class="settings-title">心率记录</div>
-          <div class="settings-desc">比赛时通过 Apple Watch 记录实时心率</div>
+          <div class="settings-title">心率监测</div>
+          <div class="settings-desc">开启后，比赛名单里填了此人就用 Apple Watch 记录心率（同时只能开一个人）</div>
         </div>
         <button class="toggle-btn${p.hrEnabled?' on':''}" id="personHRBtn"
                 onclick="toggleProfileHR(${p.id});renderPersonScreen(${p.id})">${p.hrEnabled?'开启':'关闭'}</button>
       </div>
+      ${p.hrEnabled?`
+      <div class="settings-row" style="border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
+        <div class="settings-copy">
+          <div class="settings-title">这是我本人 🙋</div>
+          <div class="settings-desc">本人则年龄/静息心率自动用本机健康数据；借表给别人打则关掉、手填对方年龄</div>
+        </div>
+        <button class="toggle-btn${p.isSelf?' on':''}"
+                onclick="toggleProfileSelf(${p.id});renderPersonScreen(${p.id})">${p.isSelf?'是':'否'}</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-copy">
+          <div class="settings-title">年龄</div>
+          <div class="settings-desc">${p.isSelf&&p.age==null&&selfHRMetrics.age?`已自动读取：${selfHRMetrics.age} 岁`:'推算最大心率'}</div>
+        </div>
+        <input type="number" class="team-input" value="${p.age??''}" placeholder="${p.isSelf&&selfHRMetrics.age?selfHRMetrics.age:'--'}" min="5" max="110"
+               style="width:60px;text-align:center;margin:0"
+               onchange="savePersonHRMetric(${p.id},'age',this.value)">
+      </div>
+      <div class="settings-row">
+        <div class="settings-copy">
+          <div class="settings-title">静息心率</div>
+          <div class="settings-desc">${p.isSelf&&p.restingHR==null&&selfHRMetrics.restingHR?`已自动读取：${selfHRMetrics.restingHR} bpm`:(p.isSelf&&!selfHRMetrics.restingHR?'健康 App 暂无数据，可手填或留空':'更精确的区间划分（可选）')}</div>
+        </div>
+        <input type="number" class="team-input" value="${p.restingHR??''}" placeholder="${p.isSelf&&selfHRMetrics.restingHR?selfHRMetrics.restingHR:'--'}" min="30" max="120"
+               style="width:60px;text-align:center;margin:0"
+               onchange="savePersonHRMetric(${p.id},'restingHR',this.value)">
+      </div>`:''}
     </div>
 
     <!-- 数据导出 -->
@@ -2952,6 +3008,151 @@ function exportPersonData(id){
   _triggerExportShare(JSON.stringify(payload,null,2), filename, `${p.name} 的比赛记录`);
 }
 
+// ══════════════════════════════════════════
+// 心率区间计算（运动科学）
+// ══════════════════════════════════════════
+// 本人指标（启动时从 HealthKit 读，作为没有 per-profile 指标时的兜底）
+let selfHRMetrics = { age: null, restingHR: null };
+
+// 最大心率（Tanaka 公式 208−0.7×年龄，比 220−年龄更准）；无年龄回退 185
+function estimateMaxHR(age){
+  const a = Number(age);
+  if(a > 0 && a < 120) return Math.round(208 - 0.7 * a);
+  return 185;
+}
+
+// Karvonen 储备心率法算 Z1–Z5 的 bpm 下界（50/60/70/80/90%）。
+// 有静息心率用储备心率法（更个性化），否则退化为 %最大心率。
+function hrZoneBounds(maxHR, restingHR){
+  const pcts = [0.5, 0.6, 0.7, 0.8, 0.9];
+  const rhr = Number(restingHR);
+  if(rhr > 0 && rhr < maxHR){
+    const hrr = maxHR - rhr;
+    return pcts.map(p => Math.round(rhr + p * hrr));
+  }
+  return pcts.map(p => Math.round(p * maxHR));
+}
+
+// 给定 bpm 落在哪个区间（1–5）
+function hrZoneOf(bpm, bounds){
+  if(bpm >= bounds[4]) return 5;
+  if(bpm >= bounds[3]) return 4;
+  if(bpm >= bounds[2]) return 3;
+  if(bpm >= bounds[1]) return 2;
+  return 1;
+}
+
+// 各区间停留时长（秒）。单段间隔封顶 30s，避免漏采导致某段被夸大。
+function hrZoneDistribution(timeline, bounds){
+  const secs = [0, 0, 0, 0, 0];
+  const pts = (timeline || [])
+    .filter(p => p && p.bpm >= 30 && p.bpm <= 250)
+    .sort((a, b) => a.timestamp - b.timestamp);
+  for(let i = 0; i < pts.length; i++){
+    const dt = i < pts.length - 1 ? (pts[i+1].timestamp - pts[i].timestamp) / 1000 : 0;
+    const d = Math.min(Math.max(0, dt), 30);
+    secs[hrZoneOf(pts[i].bpm, bounds) - 1] += d;
+  }
+  return secs;
+}
+
+// Edwards TRIMP：各区间分钟数 × 区间权重(1–5) 求和，作为训练负荷分
+function trimpScore(zoneSecs){
+  return Math.round(zoneSecs.reduce((sum, s, i) => sum + (s / 60) * (i + 1), 0));
+}
+
+// 取某场比赛的心率归属者指标（age/restingHR）。
+// 归属者就是"开了心率监测的那个人"=手表佩戴者本人，所以可用本机 HealthKit 数据兜底缺失项。
+function hrMetricsForRecord(r){
+  let age = null, restingHR = null, isSelf = false;
+  try{
+    const pid = r?.hrProfileId;
+    if(pid != null){
+      const ps = JSON.parse(localStorage.getItem('sb_profiles') || '[]');
+      const p = ps.find(x => x.id === pid);
+      if(p){
+        if(p.age != null) age = p.age;
+        if(p.restingHR != null) restingHR = p.restingHR;
+        isSelf = !!p.isSelf;
+      }
+    }
+  }catch(_){}
+  // 只有"本人"档案才用本机 HealthKit 数据兜底缺失项；
+  // 借表给别人的档案不能套用本人年龄（会算错区间），缺了就回退默认。
+  if(isSelf){
+    if(age == null) age = selfHRMetrics.age;
+    if(restingHR == null) restingHR = selfHRMetrics.restingHR;
+  }
+  const maxHR = estimateMaxHR(age);
+  return { age, restingHR, maxHR, bounds: hrZoneBounds(maxHR, restingHR) };
+}
+
+const HR_ZONE_LABELS = ['🚶 热身', '🏃 燃脂', '⚡ 有氧', '💪 无氧', '🔥 极限'];
+const HR_ZONE_COLORS = ['#5AC8FA', '#34C759', '#FFD60A', '#FF9500', '#FF3B30'];
+
+// 给定比赛内毫秒偏移，返回当时的累计比分 [cumA, cumB]（events 已按时间升序）
+function scoreAtOffset(events, offsetMs){
+  let a = 0, b = 0;
+  for(const e of (events || [])){
+    if(e.elapsedMs <= offsetMs){ a = e.cumA ?? a; b = e.cumB ?? b; }
+    else break;
+  }
+  return [a, b];
+}
+
+// 心率 × 比赛进程关联：领先/落后/打平时的平均心率 + 峰值出现的战况
+// 视角为 0 号（持机/戴表方 = 红方）。返回 HTML 片段，数据不足返回空串。
+function buildHRProgress(r){
+  const tl = (r.heartRateTimeline || [])
+    .filter(p => p && p.bpm >= 30 && p.bpm <= 250)
+    .sort((a, b) => a.timestamp - b.timestamp);
+  const events = r.events || [];
+  if(tl.length < 5 || events.length < 2) return '';
+  const start = r.date || tl[0].timestamp;
+
+  let lead = {s:0,n:0}, trail = {s:0,n:0}, even = {s:0,n:0};
+  let peak = tl[0];
+  for(const p of tl){
+    const off = p.timestamp - start;
+    const [a,b] = scoreAtOffset(events, off);
+    if(a > b) { lead.s += p.bpm; lead.n++; }
+    else if(a < b) { trail.s += p.bpm; trail.n++; }
+    else { even.s += p.bpm; even.n++; }
+    if(p.bpm > peak.bpm) peak = p;
+  }
+  const avg = o => o.n ? Math.round(o.s / o.n) : null;
+  const aLead = avg(lead), aTrail = avg(trail), aEven = avg(even);
+
+  const peakOff = Math.max(0, peak.timestamp - start);
+  const [pa, pb] = scoreAtOffset(events, peakOff);
+  const peakMin = Math.floor(peakOff / 60000);
+  const peakSec = Math.floor((peakOff % 60000) / 1000);
+  const peakTime = peakMin > 0 ? `第 ${peakMin} 分` : `第 ${peakSec} 秒`;
+
+  // 一句人话总结：落后比领先心率高 = 落后时更紧/更拼
+  let insight = '';
+  if(aLead != null && aTrail != null){
+    const diff = aTrail - aLead;
+    if(diff >= 5)      insight = `落后时心率比领先时高 ${diff} bpm，劣势下你更紧张或更拼。`;
+    else if(diff <= -5) insight = `领先时心率反而比落后时高 ${-diff} bpm，顺风时打得更投入。`;
+    else                insight = `领先和落后时心率相近，情绪比较稳定。`;
+  }
+
+  const cell = (label, val, clr) => val == null ? '' :
+    `<span class="insight-hr-stat">${label} <b style="color:${clr}">${val}</b></span>`;
+
+  return `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)">
+    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:6px;letter-spacing:.3px">心率 × 战况</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 14px">
+      ${cell('领先时', aLead, '#34C759')}
+      ${cell('落后时', aTrail, '#FF9500')}
+      ${cell('打平时', aEven, '#5AC8FA')}
+    </div>
+    <div class="insight-hr-stat" style="margin-top:6px">峰值 <b style="color:#FF3B30">${peak.bpm}</b> bpm 出现在 ${peakTime}（比分 ${pa}:${pb}）</div>
+    ${insight ? `<div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:6px;line-height:1.5">${insight}</div>` : ''}
+  </div>`;
+}
+
 // ── 心率数据采集（被动读取 Apple Watch 已记录的数据）──
 async function fetchAndStoreHeartRate(matchId, startMs, endMs){
   try{
@@ -2976,6 +3177,41 @@ async function fetchAndStoreHeartRate(matchId, startMs, endMs){
   }
 }
 
+// 启动时读本人 HealthKit 指标（年龄/静息心率），作为心率区间的默认值
+async function loadSelfHRMetrics(){
+  try{
+    if(typeof HealthKitPlugin==='undefined') return;
+    const avail=await HealthKitPlugin.isAvailable();
+    if(!avail?.available) return;
+    if(typeof HealthKitPlugin.getUserMetrics!=='function') return;
+    const m=await HealthKitPlugin.getUserMetrics();
+    if(m){
+      if(m.age!=null) selfHRMetrics.age=Number(m.age);
+      if(m.restingHeartRate!=null) selfHRMetrics.restingHR=Number(m.restingHeartRate);
+      console.info('[HR] selfHRMetrics',selfHRMetrics);
+    }
+  }catch(e){ console.warn('[HR] loadSelfHRMetrics failed:',e); }
+}
+
+// 比赛结束后查该时段消耗的卡路里，写回 record.calories
+async function fetchAndStoreActiveEnergy(matchId, startMs, endMs){
+  try{
+    if(typeof HealthKitPlugin==='undefined'||typeof HealthKitPlugin.queryActiveEnergy!=='function') return;
+    const avail=await HealthKitPlugin.isAvailable();
+    if(!avail?.available) return;
+    const res=await HealthKitPlugin.queryActiveEnergy({startMs,endMs});
+    const kcal=Number(res?.kcal||0);
+    if(kcal<=0) return;
+    const all=JSON.parse(localStorage.getItem('sb_history')||'[]');
+    const idx=all.findIndex(r=>r.id===matchId);
+    if(idx>=0){
+      all[idx].calories=kcal;
+      localStorage.setItem('sb_history',JSON.stringify(all));
+      if(currentDetailId===matchId) renderDetail(all[idx]);
+    }
+  }catch(e){ console.warn('[HR] fetchAndStoreActiveEnergy failed:',e); }
+}
+
 // ══════════════════════════════════════════
 // Apple Watch 实时心率
 // ══════════════════════════════════════════
@@ -2986,17 +3222,20 @@ let watchFinishedListenerHandle = null;
 let watchStopRequestedListenerHandle = null;
 let lastWatchStateSignature = '';
 
-async function shouldRecordHeartRateForCurrentMatch() {
-  const ap = getActiveProfile();
-  if (!ap || !ap.hrEnabled) return false;
-  // 只有当前档案的名字出现在本局比赛队伍中，才记录心率
+// 心率监测的唯一规则：那个开启了心率监测的人，名字必须出现在本场比赛队伍里才监测，归他。
+// 名字没填进比赛 → 不监测（戴表的人这场没在记分名单里，记了也没意义）。
+function hrProfileForCurrentMatch(){
   const names = CFG?.names || [];
-  return names.some(n => n === ap.name);
+  return (profiles || []).find(p => p.hrEnabled && names.some(n => n === p.name)) || null;
+}
+
+async function shouldRecordHeartRateForCurrentMatch() {
+  return Boolean(hrProfileForCurrentMatch());
 }
 
 async function ensureWatchReadyForMatch() {
   if (typeof WatchPlugin === 'undefined') {
-    alert('当前使用中的档案已开启心率记录，但设备上没有可用的 Watch 连接能力。\n\n请先连接 Apple Watch，或到个人中心关闭该档案的心率记录。');
+    alert('已开启心率监测的使用者在场上，但本机没有可用的 Apple Watch 连接能力。\n\n请先连接 Apple Watch，或到个人中心关闭心率监测。');
     return false;
   }
   try {
@@ -3009,7 +3248,7 @@ async function ensureWatchReadyForMatch() {
         `reachable: ${status?.reachable ? 'yes' : 'no'}`,
         `activation: ${status?.activationState || 'unknown'}`
       ].join('\n');
-      alert(`当前使用中的档案已开启心率记录，但没有可用的 Apple Watch。\n\n请先让 iPhone 和 Apple Watch 正常配对，并通过 Xcode 将主 App 安装到手机（由系统自动安装手表 companion app）。\n\n${details}`);
+      alert(`已开启心率监测的使用者在场上，但没有可用的 Apple Watch。\n\n请先让 iPhone 和 Apple Watch 正常配对，并通过 Xcode 将主 App 安装到手机（由系统自动安装手表 companion app）。\n\n${details}`);
     }
     return ready;
   } catch (e) {
@@ -3021,7 +3260,9 @@ async function ensureWatchReadyForMatch() {
 
 function normalizeWatchRecord(record) {
   if (!record || typeof record !== 'object') return null;
-  const ap = getActiveProfile();
+  // 手表回传的心率来自佩戴者 → 归"开了心率监测的那个人"（全局唯一）
+  const hrPerson = (profiles || []).find(p => p.hrEnabled);
+  const fallbackHrProfileId = hrPerson ? hrPerson.id : null;
   const normalized = {
     id: record.id || Date.now(),
     date: record.date || Date.now(),
@@ -3036,7 +3277,7 @@ function normalizeWatchRecord(record) {
     duration: Number(record.duration || 0),
     heartRateTimeline: Array.isArray(record.heartRateTimeline) ? record.heartRateTimeline : [],
     hrPlayerIdx: Number.isInteger(record.hrPlayerIdx) ? record.hrPlayerIdx : 0,
-    hrProfileId: record.hrProfileId ?? (ap?.hrEnabled && Array.isArray(record.names) && record.names.includes(ap.name) ? ap.id : null),
+    hrProfileId: record.hrProfileId ?? fallbackHrProfileId,
     _saved: true,
   };
   return normalized;
@@ -3112,8 +3353,10 @@ function initWatchHR() {
         console.info('[Watch][JS] heartRateUpdate', data);
         const bpm = data?.bpm;
         if (!bpm || bpm < 30 || bpm > 250) return;
+        // 这场没有"开心率监测且名字在场上"的人 → 不收不显
+        if (!hrProfileForCurrentMatch()) { updateLiveHRDisplay(0); return; }
         const ts = data?.timestamp || Date.now();
-        // 只在比赛进行中才收集 & 显示
+        // 只在比赛进行中才收集
         if (S && S.winner === null && !S.pausedAt) {
           liveHRTimeline.push({ timestamp: ts, bpm });
         }
@@ -3137,8 +3380,10 @@ function initWatchHR() {
     if (!watchStopRequestedListenerHandle) {
       watchStopRequestedListenerHandle = WatchPlugin.addListener('watchStopRequested', () => {
         console.info('[Watch][JS] watchStopRequested');
+        // 手表已在表上确认过结束，这里不能再走 menuFinish() 弹手机端 confirm，
+        // 否则确认框卡在无人看管的手机上、手表毫无反应。直接静默结束。
         if (currentScreen === 'game' && S && S.winner === null) {
-          menuFinish();
+          finishMatchNow(true);
         }
       });
     }
@@ -3163,12 +3408,13 @@ function handleWatchControl(data) {
   const team = Number(data?.team);
   const delta = Number(data?.delta);
   if (!type || !S || S.winner !== null || currentScreen !== 'game') return;
+  // 手表来的指令已经在表上做过双击确认，跳过手机端"双击防误触"，否则用户得在表上点 4 下才记 1 分
   if (type === 'addPoint' && (team === 0 || team === 1)) {
-    addPt(team);
+    addPt(team, { bypassAntiMistouch: true });
     return;
   }
   if (type === 'addScore' && CFG.sport === 'basketball' && (team === 0 || team === 1) && [1,2,3].includes(delta)) {
-    addBB(team, delta);
+    addBB(team, delta, { bypassAntiMistouch: true });
     return;
   }
   if (type === 'undo') {
@@ -3238,9 +3484,9 @@ async function startWatchWorkout() {
     const status = await WatchPlugin.isAvailable();
     console.info('[Watch] availability', status);
     if (!(status?.supported && status?.paired && status?.installed)) return;
-    const ap = getActiveProfile();
     const sport = CFG.sport || 'badminton';
-    const playerName = ap?.name || CFG.names[0] || '';
+    const hp = hrProfileForCurrentMatch();
+    const playerName = hp?.name || CFG.names[0] || '';
     console.info('[Watch][JS] startWorkout', { sport, playerName });
     await WatchPlugin.startWorkout({ sport, playerName });
     await syncWatchMatchState(true);
@@ -3274,23 +3520,31 @@ function menuFinish(){
   clearPendingScore(false);
   if(!S||S.winner!==null) return;
   if(!confirm('提前结束比赛？当前局面将被记为最终结果。')) return;
+  finishMatchNow(false);
+}
+
+// 按当前局面判定胜者并结束比赛。silent=true 时（如手表发起的结束）不弹任何对话框，
+// 平分等无法判定的情况直接返回 false（不结束），避免在无人看管的手机上堆积阻塞弹窗。
+// 返回是否成功结束。
+function finishMatchNow(silent){
+  if(!S||S.winner!==null) return false;
 
   if(CFG.sport==='basketball'){
     const [a,b]=[S.score[0],S.score[1]];
-    if(a===b){alert('当前平分，不能直接结束比赛。');return;}
+    if(a===b){ if(!silent) alert('当前平分，不能直接结束比赛。'); return false; }
     finalizeCurrentMatch(a>b?0:1);
-    return;
+    return true;
   }
 
   if(CFG.sport==='tennis'){
     const [sa,sb]=[S.sets[0],S.sets[1]];
-    if(sa!==sb){finalizeCurrentMatch(sa>sb?0:1);return;}
+    if(sa!==sb){finalizeCurrentMatch(sa>sb?0:1);return true;}
     const [ga,gb]=[S.games[0],S.games[1]];
-    if(ga!==gb){finalizeCurrentMatch(ga>gb?0:1);return;}
+    if(ga!==gb){finalizeCurrentMatch(ga>gb?0:1);return true;}
     const [pa,pb]=[S.pts[0],S.pts[1]];
-    if(pa!==pb){finalizeCurrentMatch(pa>pb?0:1);return;}
-    alert('当前完全平分，不能结束比赛。');
-    return;
+    if(pa!==pb){finalizeCurrentMatch(pa>pb?0:1);return true;}
+    if(!silent) alert('当前完全平分，不能结束比赛。');
+    return false;
   }
 
   // 羽毛球/乒乓球：当前局领先方记为本局胜者，再判比赛胜负
@@ -3304,11 +3558,12 @@ function menuFinish(){
     S.sets[sw]++;
   }
   const [sA,sB]=[S.sets[0],S.sets[1]];
-  if(sA!==sB){finalizeCurrentMatch(sA>sB?0:1);return;}
+  if(sA!==sB){finalizeCurrentMatch(sA>sB?0:1);return true;}
   // 局数仍平：用累计总得分决出
   const [cumA,cumB]=getCumScore();
-  if(cumA!==cumB){finalizeCurrentMatch(cumA>cumB?0:1);return;}
-  alert('当前完全平分，不能直接结束比赛。');
+  if(cumA!==cumB){finalizeCurrentMatch(cumA>cumB?0:1);return true;}
+  if(!silent) alert('当前完全平分，不能直接结束比赛。');
+  return false;
 }
 function menuUndo(){closeMenu();clearPendingScore(false);if(!H.length)return;S=H.pop();document.getElementById('overlay').hidden=true;render();}
 function menuReset(){closeMenu();clearPendingScore(false);if(!confirm('重置比赛？当前所有记分数据将清空，无法恢复。'))return;S=mkState();H=[];document.getElementById('overlay').hidden=true;render();}
@@ -3845,21 +4100,41 @@ function buildInsightSummary(r, names) {
       const avgBpm=Math.round(bpms.reduce((a,b)=>a+b,0)/bpms.length);
       const maxBpm=Math.max(...bpms);
       const minBpm=Math.min(...bpms);
-      // 简单强度分区（基于 220-年龄 估算，无年龄时用 185 作参考最大值）
-      const refMax=185;
-      const pct=avgBpm/refMax;
-      let zone='';
-      if(pct>=0.9)      zone='🔥 极限强度';
-      else if(pct>=0.8) zone='💪 高强度';
-      else if(pct>=0.7) zone='⚡ 中高强度';
-      else if(pct>=0.6) zone='🏃 中等强度';
-      else              zone='🚶 轻松强度';
+      // 个性化区间：按归属者年龄/静息心率算（Tanaka + Karvonen），无则回退默认
+      const M=hrMetricsForRecord(r);
+      const peakZone=hrZoneOf(maxBpm, M.bounds);
+      const zoneNames=['🚶 轻松','🏃 中等','⚡ 中高','💪 高强度','🔥 极限'];
+      const avgZone=hrZoneOf(avgBpm, M.bounds);
+      // 各区间停留时长 + 训练负荷
+      const zoneSecs=hrZoneDistribution(hrData, M.bounds);
+      const totalSec=zoneSecs.reduce((a,b)=>a+b,0)||1;
+      const trimp=trimpScore(zoneSecs);
+      const fmtMin=s=>{const m=Math.round(s/60);return m>0?m+'′':Math.round(s)+'″';};
+      // 区间分布条
+      let barHtml='';
+      for(let z=4;z>=0;z--){
+        const pctW=Math.round(zoneSecs[z]/totalSec*100);
+        if(pctW<=0) continue;
+        barHtml+=`<div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <span style="font-size:10px;width:52px;color:${HR_ZONE_COLORS[z]}">${HR_ZONE_LABELS[z]}</span>
+          <div style="flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden">
+            <div style="height:100%;width:${pctW}%;background:${HR_ZONE_COLORS[z]};border-radius:4px"></div>
+          </div>
+          <span style="font-size:10px;width:34px;text-align:right;color:rgba(255,255,255,.4)">${fmtMin(zoneSecs[z])}</span>
+        </div>`;
+      }
+      const refNote=M.restingHR?`最大 ${M.maxHR} · 静息 ${M.restingHR}`:`最大 ${M.maxHR}`;
+      const calHtml=r.calories?` <span class="insight-hr-stat">消耗 <b>${r.calories}</b> kcal</span>`:'';
       hrHtml=`<div class="insight-hr-row">
-        <span class="insight-hr-badge">${zone}</span>
-        <span class="insight-hr-stat">平均 <b>${avgBpm}</b> bpm</span>
-        <span class="insight-hr-stat">峰值 <b>${maxBpm}</b> bpm</span>
+        <span class="insight-hr-badge">${zoneNames[avgZone-1]}</span>
+        <span class="insight-hr-stat">平均 <b>${avgBpm}</b></span>
+        <span class="insight-hr-stat">峰值 <b>${maxBpm}</b>（${zoneNames[peakZone-1].replace(/^\S+\s/,'')}）</span>
         <span class="insight-hr-stat">谷值 <b>${minBpm}</b> bpm</span>
-      </div>`;
+        <span class="insight-hr-stat">负荷 <b>${trimp}</b></span>${calHtml}
+      </div>
+      <div style="margin-top:8px">${barHtml}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:6px">区间按个人最大心率推算（${refNote}）</div>
+      ${buildHRProgress(r)}`;
     }
   }
 
@@ -5032,6 +5307,7 @@ document.getElementById('inputB')?.addEventListener('change', cacheCurrentSetupN
 document.getElementById('inputA')?.addEventListener('blur', cacheCurrentSetupNames);
 document.getElementById('inputB')?.addEventListener('blur', cacheCurrentSetupNames);
 initWatchHR();
+loadSelfHRMetrics();
 consumePendingWatchMatches();
 schedulePendingWatchMatchRetries();
 // 回到前台时再次拉取手表离线记录（transferUserInfo 队列）
@@ -5051,10 +5327,13 @@ renderBackButtonToggle();
 renderMenuButton();
 seedDemoHistory();
 installEdgeSwipeBack();
+let _watchKATick = 0;
 setInterval(()=>{
   if(currentScreen==='game'&&S&&S.winner===null){
     if(!S.pausedAt) renderMenuButton();
-    syncWatchMatchState();
+    _watchKATick++;
+    // 每 2 秒强制发一次（绕过签名去重），确保手表能检测到手机心跳
+    syncWatchMatchState(_watchKATick % 2 === 0);
   }
 }, 1000);
 if (APP_PLATFORM !== 'desktop') {

@@ -149,28 +149,33 @@ final class WatchMatchManager: ObservableObject {
         pausedAt = nil
     }
 
-    func finishLocalMatch() {
+    func finishLocalMatch(alreadyScored: Bool = false) {
         guard sessionSource == .local else { return }
         refreshElapsed()
 
-        if !supportsMultiPoint {
-            // 羽毛球/乒乓球：当前局领先方记为本局胜者
-            if teamAScore != teamBScore {
-                let sw = teamAScore > teamBScore ? 0 : 1
-                setScores.append([teamAScore, teamBScore])
-                setWins[sw] += 1
-                setTimes.append(Int(Date().timeIntervalSince1970 * 1000))
-            }
-            if setWins[0] == setWins[1] {
-                summary = "当前平分，请继续比赛"
-                WKInterfaceDevice.current().play(.retry)
-                return
-            }
-        } else {
-            if teamAScore == teamBScore {
-                summary = "当前平分，请继续比赛"
-                WKInterfaceDevice.current().play(.retry)
-                return
+        // alreadyScored=true：由"打满自动结束"调用，本局已在 advanceRallyMatchIfNeeded
+        // 记过 setScores/setWins，这里绝不能再记一次（否则局分多加一次，
+        // 出现一局制 2:0、三局两胜 3:0 的错误比分）。
+        if !alreadyScored {
+            if !supportsMultiPoint {
+                // 羽毛球/乒乓球：当前局领先方记为本局胜者
+                if teamAScore != teamBScore {
+                    let sw = teamAScore > teamBScore ? 0 : 1
+                    setScores.append([teamAScore, teamBScore])
+                    setWins[sw] += 1
+                    setTimes.append(Int(Date().timeIntervalSince1970 * 1000))
+                }
+                if setWins[0] == setWins[1] {
+                    summary = "当前平分，请继续比赛"
+                    WKInterfaceDevice.current().play(.retry)
+                    return
+                }
+            } else {
+                if teamAScore == teamBScore {
+                    summary = "当前平分，请继续比赛"
+                    WKInterfaceDevice.current().play(.retry)
+                    return
+                }
             }
         }
 
@@ -197,7 +202,10 @@ final class WatchMatchManager: ObservableObject {
     }
 
     func addScore(team: Int, delta: Int) {
-        guard sessionSource == .local, isMatchActive else { return }
+        // 数据对齐方案：手表无论 .local 还是 .phone（镜像手机赛）都本地累计。
+        // 镜像赛时 ContentView 会在本地加完后再 sendControl 通知手机；
+        // 手机端 seq 去重保证不重复加，max 对齐保证手机临时不可达期间本地领先不被旧快照覆盖。
+        guard isMatchActive else { return }
         refreshElapsed()
         pushHistory()
         if team == 0 {
@@ -277,15 +285,23 @@ final class WatchMatchManager: ObservableObject {
         self.sport = sport
         sportLabel = displayName(for: sport)
         isMatchActive = true
+        isPaused = false
+        canUndo = false
+        elapsedSeconds = 0           // 必须清，否则 matchStartDate 会算成"上一场开始时间"
         periodIndex = 1
         setWins = [0, 0]
         setScores.removeAll()
         setTimes.removeAll()
+        history.removeAll()
+        heartRateTimeline.removeAll()
         teamAScore = 0
         teamBScore = 0
         teamASubtitle = ""
         teamBSubtitle = ""
         summary = "手机端已开始"
+        matchStartDate = Date()
+        pausedAccumulated = 0
+        pausedAt = nil
         print("[Watch][Match] applyPhoneStart sport=\(sport)")
         workoutManager?.start(sport: sport)
     }
@@ -303,38 +319,74 @@ final class WatchMatchManager: ObservableObject {
     }
 
     func applyPhoneState(_ msg: [String: Any]) {
-        guard sessionSource != .local else { return }
+        // 数据对齐方案：去掉 .local 拒收，永远接收手机快照；
+        // 但比分类数据用 max(本地, 手机) —— 防止"手表刚加了分、手机暂时没收到、
+        // 它推一个旧快照把本地拉回去"的回退。
+        // 手表自己开的独立赛（startLocalMatch）保留 sessionSource=.local，不被这条干扰。
         print("[Watch][Match] applyPhoneState raw=\(msg)")
         DispatchQueue.main.async {
             let isActive = msg["isActive"] as? Bool ?? false
-            self.sessionSource = isActive ? .phone : .none
-            self.isMatchActive = isActive
+
+            // 手机说结束了 → 跟着结束（独立赛不受影响：它自己的 finishLocalMatch 才负责清理）
+            if !isActive {
+                if self.sessionSource == .phone {
+                    self.sessionSource = .none
+                    self.isMatchActive = false
+                    self.isPaused = false
+                    self.canUndo = false
+                    self.summary = "手机端已结束"
+                    self.stopTicker()
+                    self.workoutManager?.stop()
+                }
+                return
+            }
+
+            // 规则字段：永远跟手机走（手机是规则权威）
             self.sport = msg["sport"] as? String ?? self.sport
             self.sportLabel = msg["sportLabel"] as? String ?? self.displayName(for: self.sport)
-            self.teamAName = msg["teamAName"] as? String ?? "A"
-            self.teamBName = msg["teamBName"] as? String ?? "B"
-            self.teamAScore = msg["teamAScore"] as? Int ?? 0
-            self.teamBScore = msg["teamBScore"] as? Int ?? 0
-            self.teamASubtitle = msg["teamASubtitle"] as? String ?? ""
-            self.teamBSubtitle = msg["teamBSubtitle"] as? String ?? ""
-            self.summary = msg["summary"] as? String ?? ""
-            self.periodLabel = msg["periodLabel"] as? String ?? ""
-            self.isPaused = msg["isPaused"] as? Bool ?? false
-            self.canUndo = false
+            self.teamAName = msg["teamAName"] as? String ?? self.teamAName
+            self.teamBName = msg["teamBName"] as? String ?? self.teamBName
             self.supportsMultiPoint = msg["supportsMultiPoint"] as? Bool ?? false
-            self.elapsedSeconds = msg["elapsedSeconds"] as? Int ?? 0
             self.ptWin = msg["ptWin"] as? Int ?? self.ptWin
             self.totalSets = msg["totalSets"] as? Int ?? self.totalSets
             self.setWin = msg["setWin"] as? Int ?? self.setWin
-            self.periodIndex = msg["periodIndex"] as? Int ?? self.periodIndex
-            self.setWins = msg["setWins"] as? [Int] ?? self.setWins
-            print("[Watch][Match] applied phone state active=\(self.isMatchActive) score=\(self.teamAScore):\(self.teamBScore) period=\(self.periodIndex) ptWin=\(self.ptWin) totalSets=\(self.totalSets) setWins=\(self.setWins)")
-            if self.isMatchActive && !self.isPaused {
-                self.startTicker()
-                self.workoutManager?.start(sport: self.sport)
-            } else {
+            self.periodLabel = msg["periodLabel"] as? String ?? self.periodLabel
+            self.teamASubtitle = msg["teamASubtitle"] as? String ?? self.teamASubtitle
+            self.teamBSubtitle = msg["teamBSubtitle"] as? String ?? self.teamBSubtitle
+            self.summary = msg["summary"] as? String ?? self.summary
+            // 暂停状态：手机权威（防止手表本地暂停状态和手机不一致）
+            self.isPaused = msg["isPaused"] as? Bool ?? false
+
+            // 比分/局数/时间：max 对齐（核心）
+            let phoneA = msg["teamAScore"] as? Int ?? 0
+            let phoneB = msg["teamBScore"] as? Int ?? 0
+            self.teamAScore = max(self.teamAScore, phoneA)
+            self.teamBScore = max(self.teamBScore, phoneB)
+            let phonePeriod = msg["periodIndex"] as? Int ?? self.periodIndex
+            self.periodIndex = max(self.periodIndex, phonePeriod)
+            if let phoneSW = msg["setWins"] as? [Int], phoneSW.count == 2 {
+                self.setWins = [
+                    max(self.setWins[0], phoneSW[0]),
+                    max(self.setWins[1], phoneSW[1])
+                ]
+            }
+            let phoneElapsed = msg["elapsedSeconds"] as? Int ?? 0
+            self.elapsedSeconds = max(self.elapsedSeconds, phoneElapsed)
+
+            // 状态机：第一次进入或重新激活
+            if !self.isMatchActive {
+                self.isMatchActive = true
+                if self.sessionSource == .none { self.sessionSource = .phone }
+            }
+
+            print("[Watch][Match] applied phone state src=\(self.sessionSource) score=\(self.teamAScore):\(self.teamBScore) period=\(self.periodIndex) setWins=\(self.setWins)")
+            if self.isPaused {
                 self.stopTicker()
-                self.workoutManager?.stop()
+            } else if self.ticker == nil {
+                self.startTicker()
+            }
+            if self.workoutManager?.isActive != true {
+                self.workoutManager?.start(sport: self.sport)
             }
         }
     }
@@ -382,7 +434,7 @@ final class WatchMatchManager: ObservableObject {
         if setWins[winner] >= setWin {
             refreshProgress()
             summary = "\(winner == 0 ? teamAName : teamBName) 获胜"
-            finishLocalMatch()
+            finishLocalMatch(alreadyScored: true)   // 本局已记，勿重复
             return
         }
 

@@ -5,6 +5,9 @@ class WorkoutManager: NSObject, ObservableObject {
     let healthStore = HKHealthStore()
     private var session: HKWorkoutSession?
     private var builder: HKLiveWorkoutBuilder?
+    private var heartRateQuery: HKAnchoredObjectQuery?
+    private var heartRateQueryAnchor: HKQueryAnchor?
+    private var lastHeartRateSampleDate: Date?
 
     @Published var heartRate: Double = 0
     @Published var isActive = false
@@ -45,8 +48,11 @@ class WorkoutManager: NSObject, ObservableObject {
                 self.session?.delegate = self
                 self.builder?.delegate = self
                 let now = Date()
+                self.lastHeartRateSampleDate = nil
+                self.heartRateQueryAnchor = nil
                 self.session?.startActivity(with: now)
                 self.builder?.beginCollection(withStart: now) { _, _ in }
+                self.startHeartRateStreaming(from: now)
                 DispatchQueue.main.async {
                     self.isActive = true
                     self.heartRate = 0
@@ -63,6 +69,7 @@ class WorkoutManager: NSObject, ObservableObject {
     /// 否则系统稍后调用的回调拿不到对象，训练记录会"烂尾"。
     func stop() {
         guard let session else { return }
+        stopHeartRateStreaming()
         session.end()
         DispatchQueue.main.async {
             self.isActive = false
@@ -90,6 +97,52 @@ class WorkoutManager: NSObject, ObservableObject {
         default:             return .badminton
         }
     }
+
+    private func startHeartRateStreaming(from startDate: Date) {
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else { return }
+        stopHeartRateStreaming()
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: nil, options: .strictStartDate)
+        let query = HKAnchoredObjectQuery(type: heartRateType,
+                                          predicate: predicate,
+                                          anchor: heartRateQueryAnchor,
+                                          limit: HKObjectQueryNoLimit) { [weak self] _, samples, _, anchor, _ in
+            self?.heartRateQueryAnchor = anchor
+            self?.handleHeartRateSamples(samples)
+        }
+        query.updateHandler = { [weak self] _, samples, _, anchor, _ in
+            self?.heartRateQueryAnchor = anchor
+            self?.handleHeartRateSamples(samples)
+        }
+        heartRateQuery = query
+        healthStore.execute(query)
+    }
+
+    private func stopHeartRateStreaming() {
+        if let heartRateQuery {
+            healthStore.stop(heartRateQuery)
+        }
+        heartRateQuery = nil
+        heartRateQueryAnchor = nil
+    }
+
+    private func handleHeartRateSamples(_ samples: [HKSample]?) {
+        guard let quantitySamples = samples as? [HKQuantitySample], !quantitySamples.isEmpty else { return }
+        let latestSample = quantitySamples.max(by: { $0.endDate < $1.endDate })
+        guard let latestSample else { return }
+        let bpm = latestSample.quantity.doubleValue(for: HKUnit(from: "count/min"))
+        publishHeartRate(bpm, at: latestSample.endDate)
+    }
+
+    private func publishHeartRate(_ bpm: Double, at date: Date = Date()) {
+        guard bpm > 0 else { return }
+        if let lastHeartRateSampleDate, date <= lastHeartRateSampleDate {
+            return
+        }
+        lastHeartRateSampleDate = date
+        let ts = date.timeIntervalSince1970 * 1000
+        DispatchQueue.main.async { self.heartRate = bpm }
+        onHeartRate?(Int(bpm.rounded()), ts)
+    }
 }
 
 // MARK: - HKWorkoutSessionDelegate
@@ -102,6 +155,7 @@ extension WorkoutManager: HKWorkoutSessionDelegate {
             builder?.endCollection(withEnd: date) { [weak self] _, _ in
                 self?.builder?.finishWorkout { [weak self] _, _ in
                     DispatchQueue.main.async {
+                        self?.stopHeartRateStreaming()
                         self?.session = nil
                         self?.builder = nil
                     }
@@ -111,6 +165,7 @@ extension WorkoutManager: HKWorkoutSessionDelegate {
     }
     func workoutSession(_ session: HKWorkoutSession, didFailWithError error: Error) {
         print("[WorkoutManager] session error: \(error)")
+        stopHeartRateStreaming()
     }
 }
 
@@ -125,9 +180,6 @@ extension WorkoutManager: HKLiveWorkoutBuilderDelegate {
         let bpm = builder.statistics(for: hrType)?
             .mostRecentQuantity()?
             .doubleValue(for: HKUnit(from: "count/min")) ?? 0
-        guard bpm > 0 else { return }
-        let ts = Date().timeIntervalSince1970 * 1000
-        DispatchQueue.main.async { self.heartRate = bpm }
-        onHeartRate?(Int(bpm.rounded()), ts)
+        publishHeartRate(bpm)
     }
 }

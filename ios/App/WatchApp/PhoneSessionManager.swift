@@ -63,17 +63,21 @@ class PhoneSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
     // MARK: - 启动时恢复
 
-    /// App 启动时读 applicationContext：恢复档案名 + 如有进行中比赛则进入记分页
+    /// App 启动时只恢复档案名，绝不根据残留快照自动进入记分页。
+    /// 旧的 isActive=true 快照（上一场没正确收尾）会把手表卡在 .phone 比分页且无法退出；
+    /// 真正进行中的手机赛会通过实时 sendMessage / 心跳重新驱动手表进入记分页。
     func applyContextOnLaunch() {
         guard WCSession.isSupported() else { return }
-        // 先从本地存储恢复（无网络时也能用）
         if let saved = UserDefaults.standard.stringArray(forKey: "watch_profile_names") {
             DispatchQueue.main.async { self.matchManager?.profileNames = saved }
         }
         let ctx = WCSession.default.receivedApplicationContext
         guard !ctx.isEmpty else { return }
-        // applicationContext 包含档案名和/或比赛快照
-        applyContext(ctx, delay: 0.05)
+        // 只提取档案名，不恢复比赛快照
+        if let names = ctx["profileNames"] as? [String] {
+            UserDefaults.standard.set(names, forKey: "watch_profile_names")
+            DispatchQueue.main.async { self.matchManager?.profileNames = names }
+        }
     }
 
     // MARK: - 处理来自手机的消息

@@ -113,7 +113,9 @@ struct MatchSettingsView: View {
     }
 
     @State private var selectedA = 0
-    @State private var selectedB = 1
+    // B 用的是 nameOptionsB（已去掉 A 选中的那个），默认就指它的第一项；
+    // 设成 1 会在名单只剩 1 项时越界，回退成"对手"。
+    @State private var selectedB = 0
     // 非篮球规则
     @State private var ptWin: Int
     @State private var totalSets: Int
@@ -358,7 +360,12 @@ struct MatchView: View {
         .alert("结束比赛", isPresented: $showFinishConfirm) {
             Button("结束", role: .destructive) {
                 if match.isLocalSession { match.finishLocalMatch() }
-                else { phone.requestStopFromWatch() }
+                else {
+                    // .phone 模式：通知手机的同时本地也退出。
+                    // 用 async 让 alert 先 dismiss 完，再切 isMatchActive，避免同帧状态切换 UI 卡死。
+                    phone.requestStopFromWatch()
+                    DispatchQueue.main.async { match.applyPhoneStop() }
+                }
             }
             Button("取消", role: .cancel) {}
         }
@@ -453,8 +460,12 @@ struct MatchView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             WKInterfaceDevice.current().play(.notification)
         }
-        if match.isLocalSession { match.addScore(team: team, delta: delta) }
-        else { phone.sendControl("addScore", delta: delta, team: team) }
+        // 数据对齐方案：无论独立赛还是镜像赛，永远本地立即累计；
+        // 镜像赛额外通知手机（手机端 seq 去重+max 对齐，手机锁屏走 transferUserInfo 兜底）
+        match.addScore(team: team, delta: delta)
+        if match.sessionSource == .phone {
+            phone.sendControl("addScore", delta: delta, team: team)
+        }
     }
 
     private func primaryScore(team: Int) {
@@ -466,8 +477,10 @@ struct MatchView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             WKInterfaceDevice.current().play(.notification)
         }
-        if match.isLocalSession { match.addPoint(team: team) }
-        else { phone.sendControl("addPoint", team: team) }
+        match.addPoint(team: team)
+        if match.sessionSource == .phone {
+            phone.sendControl("addPoint", team: team)
+        }
     }
 
     private func haptic(_ t: WKHapticType) { WKInterfaceDevice.current().play(t) }
@@ -480,12 +493,15 @@ struct PanelView: View {
     let name: String; let score: Int; let subtitle: String
     let hex: String; let supportsMultiPoint: Bool
     let onPoint: () -> Void; let onPlus2: () -> Void; let onPlus3: () -> Void
+    // 手写双击检测：SwiftUI 内置 .onTapGesture(count:2) 在 watchOS 上时间窗约 300ms 极严，
+    // 加上 ZStack 子视图（Text/miniBtn）会吞手势，实测表现为"点四下才记一分"。
+    // 用状态变量自己实现：第一次点击记时间，0.6s 内再点一次才算双击触发。
+    @State private var lastTapAt: Date? = nil
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 13, style: .continuous)
                 .fill(Color(hex: hex))
-                .onTapGesture(count: 2, perform: onPoint)
 
             VStack(alignment: .leading, spacing: 0) {
                 Text(name)
@@ -520,6 +536,21 @@ struct PanelView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        // 整面板任意位置都参与命中
+        .contentShape(Rectangle())
+        // 用普通 onTapGesture（单击）+ 手写双击窗口（0.6s）。
+        // 不用 .onTapGesture(count:2) —— Apple Watch 上时间窗约 300ms 极严，命中率低；
+        // 不用 .simultaneousGesture —— 与 miniBtn (+2/+3 子按钮) 共存时手势识别不稳。
+        // 子按钮自身仍接收单击事件（SwiftUI hit test 内层优先）。
+        .onTapGesture {
+            let now = Date()
+            if let last = lastTapAt, now.timeIntervalSince(last) < 0.6 {
+                lastTapAt = nil
+                onPoint()
+            } else {
+                lastTapAt = now
+            }
         }
     }
 
@@ -615,7 +646,12 @@ struct PauseOverlay: View {
         .alert("结束比赛", isPresented: $showFinishConfirm) {
             Button("结束", role: .destructive) {
                 if match.isLocalSession { match.finishLocalMatch() }
-                else { phone.requestStopFromWatch() }
+                else {
+                    // .phone 模式：通知手机的同时本地也退出。
+                    // 用 async 让 alert 先 dismiss 完，再切 isMatchActive，避免同帧状态切换 UI 卡死。
+                    phone.requestStopFromWatch()
+                    DispatchQueue.main.async { match.applyPhoneStop() }
+                }
             }
             Button("取消", role: .cancel) {}
         }
