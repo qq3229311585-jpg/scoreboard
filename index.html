@@ -1,4 +1,3 @@
-<!-- 此文件由 prepare-mobile-web.mjs 自动同步自 mobile-web/index.html，勿直接编辑 -->
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -750,14 +749,14 @@
       letter-spacing: 1px; padding: 12px 0 6px;
     }
     .log-run {
-      display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
-      align-items: baseline; gap: 14px;
+      display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .95fr) auto;
+      align-items: baseline; gap: 10px;
       padding: 11px 16px; border-top: 1px solid rgba(255,255,255,.04);
     }
     .log-run:last-child { border-bottom: none; }
-    .log-who { font-size: 14px; font-weight: 600; min-width: 0; }
-    .log-pts { font-size: 12px; color: rgba(255,255,255,.35); min-width: 0; }
-    .log-meta { display: flex; align-items: baseline; justify-content: flex-end; gap: 12px; white-space: nowrap; }
+    .log-who { font-size: 14px; font-weight: 600; min-width: 0; white-space: nowrap; }
+    .log-pts { font-size: 12px; color: rgba(255,255,255,.35); min-width: 0; white-space: nowrap; }
+    .log-meta { display: flex; align-items: baseline; justify-content: flex-end; gap: 8px; white-space: nowrap; }
     .log-point-time { font-size: 12px; color: rgba(255,255,255,.32); font-variant-numeric: tabular-nums; }
     .log-score { font-size: 13px; color: rgba(255,255,255,.6); font-variant-numeric: tabular-nums; font-weight: 600; }
     .settings-scroll {
@@ -2575,6 +2574,8 @@ function saveMatch(){
     hrPlayerIdx: null,
     hrProfileId: null,
     calories: null,
+    swingCount: 0,
+    matchStartMs: S.startTime || Date.now(),
   };
   rememberWatchNames(record.names||[]);
   // 心率归属：归"已开启心率且名字在场上"的那个档案（不死盯激活档案）
@@ -2931,6 +2932,9 @@ function renderPersonScreen(id){
       </div>`:''}
     </div>
 
+    <!-- 体能趋势 -->
+    ${buildFitnessTrend(p, myMatches)}
+
     <!-- 数据导出 -->
     <div class="settings-card" style="margin-top:8px">
       <div class="settings-row" style="cursor:pointer" onclick="exportPersonData(${p.id})">
@@ -2996,6 +3000,130 @@ function deleteProfile(id){
   }
   saveProfilesToStorage();
   navTo('profile','back');
+}
+
+function buildFitnessTrend(profile, matches){
+  const hrMatches=matches
+    .filter(r=>Array.isArray(r.heartRateTimeline)&&r.heartRateTimeline.length>=2)
+    .sort((a,b)=>a.date-b.date);
+  const swingMatches=matches.filter(r=>r.swingCount>0).sort((a,b)=>a.date-b.date);
+  if(!hrMatches.length&&!swingMatches.length) return '';
+
+  const W=280, H=100, PX=32, PY=16;
+  let html='<div class="settings-card" style="margin-top:8px"><div style="padding:14px 16px 6px"><div class="settings-title" style="margin-bottom:10px">体能趋势</div>';
+
+  function miniChart(points, color, unit, label){
+    if(points.length<2) return '';
+    const vals=points.map(p=>p.v), dates=points.map(p=>p.d);
+    const minV=Math.min(...vals), maxV=Math.max(...vals);
+    const range=maxV-minV||1;
+    const minD=dates[0], maxD=dates[dates.length-1];
+    const rangeD=maxD-minD||1;
+    const pts=points.map(p=>{
+      const x=PX+((p.d-minD)/rangeD)*(W-PX*2);
+      const y=PY+((maxV-p.v)/range)*(H-PY*2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const latest=vals[vals.length-1];
+    const prev=vals[vals.length-2];
+    const delta=latest-prev;
+    const arrow=delta>0?'↑':delta<0?'↓':'→';
+    const arrowClr=delta>0?'#34C759':delta<0?'#FF3B30':'rgba(255,255,255,.4)';
+    const d0=new Date(minD), dN=new Date(maxD);
+    const fmtD=d=>`${d.getMonth()+1}/${d.getDate()}`;
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.7)">${label}</span>
+        <span style="font-size:18px;font-weight:700;color:${color}">${Math.round(latest)}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.4)">${unit}</span>
+        <span style="font-size:11px;font-weight:600;color:${arrowClr}">${arrow}${Math.abs(Math.round(delta))}</span>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px">
+        <text x="${PX}" y="${PY-2}" font-size="9" fill="rgba(255,255,255,.25)">${Math.round(maxV)}</text>
+        <text x="${PX}" y="${H-2}" font-size="9" fill="rgba(255,255,255,.25)">${Math.round(minV)}</text>
+        <text x="${PX}" y="${H-2}" font-size="8" fill="rgba(255,255,255,.18)" text-anchor="start" dy="0" dx="0" transform="translate(0,-12)">${fmtD(d0)}</text>
+        <text x="${W-PX}" y="${H-2}" font-size="8" fill="rgba(255,255,255,.18)" text-anchor="end" transform="translate(0,-12)">${fmtD(dN)}</text>
+        <polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        ${points.map((p,i)=>{
+          const x=PX+((p.d-minD)/rangeD)*(W-PX*2);
+          const y=PY+((maxV-p.v)/range)*(H-PY*2);
+          return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${color}" opacity="${i===points.length-1?1:0.5}"/>`;
+        }).join('')}
+      </svg>
+    </div>`;
+  }
+
+  // TRIMP 趋势
+  if(hrMatches.length>=2){
+    const trimpPts=hrMatches.map(r=>{
+      const M=getHRMetricsForProfile(profile);
+      if(!M) return null;
+      const zoneSecs=hrZoneDistribution(r.heartRateTimeline, M.bounds);
+      return {d:r.date, v:trimpScore(zoneSecs)};
+    }).filter(Boolean);
+    if(trimpPts.length>=2) html+=miniChart(trimpPts,'#FF9500','','训练负荷 TRIMP');
+  }
+
+  // 峰值心率趋势
+  if(hrMatches.length>=2){
+    const peakPts=hrMatches.map(r=>{
+      const bpms=r.heartRateTimeline.filter(p=>p.bpm>=30&&p.bpm<=250).map(p=>p.bpm);
+      if(!bpms.length) return null;
+      return {d:r.date, v:Math.max(...bpms)};
+    }).filter(Boolean);
+    if(peakPts.length>=2) html+=miniChart(peakPts,'#FF3B30','bpm','峰值心率');
+  }
+
+  // 平均心率趋势
+  if(hrMatches.length>=2){
+    const avgPts=hrMatches.map(r=>{
+      const bpms=r.heartRateTimeline.filter(p=>p.bpm>=30&&p.bpm<=250).map(p=>p.bpm);
+      if(!bpms.length) return null;
+      return {d:r.date, v:bpms.reduce((a,b)=>a+b,0)/bpms.length};
+    }).filter(Boolean);
+    if(avgPts.length>=2) html+=miniChart(avgPts,'#5AC8FA','bpm','平均心率');
+  }
+
+  // 挥拍次数趋势
+  if(swingMatches.length>=2){
+    const swingPts=swingMatches.map(r=>({d:r.date, v:r.swingCount}));
+    html+=miniChart(swingPts,'#FFD60A','次','挥拍次数');
+  }
+
+  // 每分钟挥拍（击球密度）
+  if(swingMatches.length>=2){
+    const densityPts=swingMatches.map(r=>{
+      const min=(r.duration||0)/60000;
+      return min>0.5?{d:r.date, v:r.swingCount/min}:null;
+    }).filter(Boolean);
+    if(densityPts.length>=2) html+=miniChart(densityPts,'#AF52DE','次/min','击球密度');
+  }
+
+  // 同对手对比
+  const opponentMap=new Map();
+  hrMatches.forEach(r=>{
+    const opp=r.names?.find(n=>n!==profile.name);
+    if(!opp) return;
+    if(!opponentMap.has(opp)) opponentMap.set(opp,[]);
+    const M=getHRMetricsForProfile(profile);
+    if(!M) return;
+    const zoneSecs=hrZoneDistribution(r.heartRateTimeline, M.bounds);
+    opponentMap.get(opp).push({d:r.date, v:trimpScore(zoneSecs), opp});
+  });
+  for(const [opp, pts] of opponentMap){
+    if(pts.length>=2) html+=miniChart(pts,'#34C759','',`vs ${opp} 负荷`);
+  }
+
+  html+='</div></div>';
+  return html;
+}
+
+function getHRMetricsForProfile(profile){
+  const age=profile.age||(profile.isSelf&&selfHRMetrics.age?selfHRMetrics.age:null);
+  const restingHR=profile.restingHR||(profile.isSelf&&selfHRMetrics.restingHR?selfHRMetrics.restingHR:null);
+  const maxHR=estimateMaxHR(age);
+  if(!maxHR) return null;
+  return {age, restingHR, maxHR, bounds:hrZoneBounds(maxHR, restingHR)};
 }
 
 function exportPersonData(id){
@@ -3109,7 +3237,7 @@ function buildHRProgress(r){
     .sort((a, b) => a.timestamp - b.timestamp);
   const events = r.events || [];
   if(tl.length < 5 || events.length < 2) return '';
-  const start = r.date || tl[0].timestamp;
+  const start = r.matchStartMs || r.date || tl[0].timestamp;
 
   let lead = {s:0,n:0}, trail = {s:0,n:0}, even = {s:0,n:0};
   let peak = tl[0];
@@ -3279,6 +3407,11 @@ function normalizeWatchRecord(record) {
     heartRateTimeline: Array.isArray(record.heartRateTimeline) ? record.heartRateTimeline : [],
     hrPlayerIdx: Number.isInteger(record.hrPlayerIdx) ? record.hrPlayerIdx : 0,
     hrProfileId: record.hrProfileId ?? fallbackHrProfileId,
+    swingCount: Number.isInteger(record.swingCount) ? record.swingCount : 0,
+    // 手表回传的 date 是结束时间，减去 duration 还原开始时间；手机端 saveMatch 会直接写 matchStartMs
+    matchStartMs: (record.matchStartMs != null)
+      ? record.matchStartMs
+      : (record.date || Date.now()) - (record.duration || 0),
     _saved: true,
   };
   return normalized;
@@ -3709,7 +3842,7 @@ function renderHistoryList(){
           <span class="h-team ${w===1?'winner':'loser'}">${r.names[1]}</span>
         </div>
         ${scoreInfo.detail?`<div class="h-set-line">${scoreInfo.detail}</div>`:''}
-        <div class="h-duration">${dur}</div>
+        <div class="h-duration">${dur}${r.swingCount?` · 🏸 ${r.swingCount}拍`:''}</div>
       </div>`;
     return cardInner;
   }).join('');
@@ -3875,6 +4008,31 @@ function renderDetail(r){
 
   // 节奏分析
   html+=buildPaceSection(r,setSections);
+
+  // 挥拍统计
+  if(r.swingCount>0){
+    const totalPoints=(r.events||[]).length;
+    const swingsPerPt=totalPoints>0?(r.swingCount/totalPoints).toFixed(1):'--';
+    const durMin=(r.duration||0)/60000;
+    const swingsPerMin=durMin>0.5?(r.swingCount/durMin).toFixed(1):'--';
+    html+=`<div class="d-section"><div class="d-section-title">挥拍统计</div><div class="d-card">
+      <div class="set-row">
+        <span class="set-label">总挥拍</span>
+        <span class="set-score" style="color:#FFD60A;font-weight:700">${r.swingCount}</span>
+        <span class="set-time">次</span>
+      </div>
+      <div class="set-row">
+        <span class="set-label">每分钟</span>
+        <span class="set-score">${swingsPerMin}</span>
+        <span class="set-time">次/min</span>
+      </div>
+      <div class="set-row">
+        <span class="set-label">每球</span>
+        <span class="set-score">${swingsPerPt}</span>
+        <span class="set-time">次/分</span>
+      </div>
+    </div></div>`;
+  }
 
   // 分局详情（默认折叠）
   const colId='setDetail_'+(r.id||Date.now());
@@ -4100,7 +4258,9 @@ function buildInsightSummary(r, names) {
     if(bpms.length>=3){
       const avgBpm=Math.round(bpms.reduce((a,b)=>a+b,0)/bpms.length);
       const maxBpm=Math.max(...bpms);
-      const minBpm=Math.min(...bpms);
+      const sortedBpms=[...bpms].sort((a,b)=>a-b);
+      // 用第5百分位而非绝对最小，跳过热身初期尚未拉升的静息心率采样
+      const minBpm=sortedBpms[Math.max(0,Math.floor(sortedBpms.length*0.05))];
       // 个性化区间：按归属者年龄/静息心率算（Tanaka + Karvonen），无则回退默认
       const M=hrMetricsForRecord(r);
       const peakZone=hrZoneOf(maxBpm, M.bounds);
@@ -4371,7 +4531,7 @@ function fmtPointTime(ms){
   const totalSec=Math.max(0,Math.floor(ms/1000));
   const mm=String(Math.floor(totalSec/60)).padStart(2,'0');
   const ss=String(totalSec%60).padStart(2,'0');
-  return `用时 ${mm}:${ss}`;
+  return `${mm}:${ss}`;
 }
 function fmtMatchMinute(ms){
   const totalSec=Math.max(0,Math.floor((ms||0)/1000));
@@ -5233,10 +5393,12 @@ function seedDemoHistory(){
     const winner=setWinsA>=setWinsB?0:1; // basketball uses score
     const ptWin=sport==='tabletennis'?11:sport==='badminton'?21:null;
     const heartRateTimeline=withHR?genHR(now,elapsed,rng):[];
+    const swingCount=(sport==='badminton'||sport==='tennis'||sport==='tabletennis')
+      ? Math.round(allEvs.length*(2+rng()*3)) : 0;
     return{id,date:now,sport,names,winner,duration:elapsed,
       rules:{ptWin,setWin:Math.ceil(setScores.length/2),totalSets:setScores.length},
       sets:setScoresSaved,setScores:setScoresSaved,setTimes,events:allEvs,
-      heartRateTimeline,hrPlayerIdx:withHR?0:null,
+      heartRateTimeline,hrPlayerIdx:withHR?0:null,swingCount,
       _saved:true,_demo:true};
   }
 
