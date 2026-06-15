@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
+		36209937F782DF033A8EC80A /* TrainerAppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB20722F4A5DB04C3A70FB8B /* TrainerAppMain.swift */; };
+		36D4904D9735DDEFC3D3C62C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 36F7C7CE39CAC51DB0EF3708 /* Assets.xcassets */; };
+		407CD83AD3FB4141CA5377BF /* WatchReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E21CD8312FAF02FC268E96C /* WatchReceiver.swift */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -15,8 +18,9 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
-		DD200000000000000002AA02 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD200000000000000002AA01 /* ViewController.swift */; };
+		56F0F80F17AC912E9792942F /* SwingTrainer Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = EE200000000000000001CC01 /* SwingTrainer Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AA1B2C3D4E5F000000000003 /* HealthKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F000000000002 /* HealthKitPlugin.swift */; };
+		AC9DAB319B860C92BF98BB15 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8778707F96689E396A0ABE10 /* Foundation.framework */; };
 		DD100000000000000001AA02 /* WatchPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001AA01 /* WatchPlugin.swift */; };
 		DD100000000000000001EE02 /* WatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001EE01 /* WatchApp.swift */; };
 		DD100000000000000001EE04 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001EE03 /* ContentView.swift */; };
@@ -26,10 +30,25 @@
 		DD100000000000000001EE12 /* SwingDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001EE11 /* SwingDetector.swift */; };
 		DD100000000000000001FF03 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001FF02 /* Assets.xcassets */; };
 		DD100000000000000002CC02 /* Scoreboard Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = DD100000000000000001CC01 /* Scoreboard Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		DD100000000000000003EE12 /* AudioGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000003EE11 /* AudioGate.swift */; };
+		DD200000000000000002AA02 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD200000000000000002AA01 /* ViewController.swift */; };
 		EDF095262FD8736F00418E53 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD100000000000000001BB01 /* WatchConnectivity.framework */; };
+		EE200000000000000001EE02 /* SwingTrainerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200000000000000001EE01 /* SwingTrainerApp.swift */; };
+		EE200000000000000001EE04 /* RecorderContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200000000000000001EE03 /* RecorderContentView.swift */; };
+		EE200000000000000001EE06 /* RecordingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200000000000000001EE05 /* RecordingSession.swift */; };
+		EE200000000000000001EE08 /* SwingDetectorLite.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE200000000000000001EE07 /* SwingDetectorLite.swift */; };
+		EE200000000000000001FF03 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EE200000000000000001FF02 /* Assets.xcassets */; };
+		FBC675FE0A4D90050489668D /* TrainerWorkout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78A9EC31BF982C5F730EE2F8 /* TrainerWorkout.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		D0EF8DDB0E2F98AE1952639C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EE200000000000000001DD01;
+			remoteInfo = "SwingTrainer Watch App";
+		};
 		DD100000000000000002DD02 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
@@ -37,9 +56,27 @@
 			remoteGlobalIDString = DD100000000000000001DD01;
 			remoteInfo = "Scoreboard Watch App";
 		};
+		EE200000000000000002DD02 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EE200000000000000001DD01;
+			remoteInfo = "SwingTrainer Watch App";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		B191AA748F9DC7DDF1F6E123 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				56F0F80F17AC912E9792942F /* SwingTrainer Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD100000000000000002CC01 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -54,7 +91,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0E21CD8312FAF02FC268E96C /* WatchReceiver.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = WatchReceiver.swift; path = TrainerApp/WatchReceiver.swift; sourceTree = "<group>"; };
+		19759373F23C28AC64282DD4 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = TrainerApp/Info.plist; sourceTree = "<group>"; };
+		2A087E503B57A9D9E8A4C818 /* TrainerApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TrainerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		36F7C7CE39CAC51DB0EF3708 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = TrainerApp/Assets.xcassets; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -63,10 +104,12 @@
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		78A9EC31BF982C5F730EE2F8 /* TrainerWorkout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrainerWorkout.swift; sourceTree = "<group>"; };
+		8778707F96689E396A0ABE10 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		AA1B2C3D4E5F000000000001 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
-		DD200000000000000002AA01 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		AA1B2C3D4E5F000000000002 /* HealthKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitPlugin.swift; sourceTree = "<group>"; };
+		DB20722F4A5DB04C3A70FB8B /* TrainerAppMain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TrainerAppMain.swift; path = TrainerApp/TrainerAppMain.swift; sourceTree = "<group>"; };
 		DD100000000000000001AA01 /* WatchPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPlugin.swift; sourceTree = "<group>"; };
 		DD100000000000000001BB01 /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; };
 		DD100000000000000001CC01 /* Scoreboard Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Scoreboard Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -79,9 +122,27 @@
 		DD100000000000000001FF01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DD100000000000000001FF02 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DD100000000000000001FF04 /* WatchApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WatchApp.entitlements; sourceTree = "<group>"; };
+		DD100000000000000003EE11 /* AudioGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioGate.swift; sourceTree = "<group>"; };
+		DD200000000000000002AA01 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		EE200000000000000001CC01 /* SwingTrainer Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SwingTrainer Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		EE200000000000000001EE01 /* SwingTrainerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwingTrainerApp.swift; sourceTree = "<group>"; };
+		EE200000000000000001EE03 /* RecorderContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecorderContentView.swift; sourceTree = "<group>"; };
+		EE200000000000000001EE05 /* RecordingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingSession.swift; sourceTree = "<group>"; };
+		EE200000000000000001EE07 /* SwingDetectorLite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwingDetectorLite.swift; sourceTree = "<group>"; };
+		EE200000000000000001FF01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EE200000000000000001FF02 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		EE200000000000000001FF04 /* SwingTrainer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SwingTrainer.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		07DC878E3D814DDCDE0ECE8D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC9DAB319B860C92BF98BB15 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -98,17 +159,38 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EE200000000000000001DD03 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		32E430610C209C027C853DF7 /* TrainerApp */ = {
+			isa = PBXGroup;
+			children = (
+				DB20722F4A5DB04C3A70FB8B /* TrainerAppMain.swift */,
+				19759373F23C28AC64282DD4 /* Info.plist */,
+				36F7C7CE39CAC51DB0EF3708 /* Assets.xcassets */,
+				0E21CD8312FAF02FC268E96C /* WatchReceiver.swift */,
+			);
+			name = TrainerApp;
+			sourceTree = SOURCE_ROOT;
+		};
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				DD100000000000000002AA01 /* WatchApp */,
+				EE200000000000000002AA01 /* TrainerWatch */,
 				504EC3051FED79650016851F /* Products */,
 				EDF095252FD86A7700418E53 /* Recovered References */,
+				810CF5F83C58E7F9D0C2C3FC /* Frameworks */,
+				32E430610C209C027C853DF7 /* TrainerApp */,
 			);
 			sourceTree = "<group>";
 		};
@@ -117,6 +199,8 @@
 			children = (
 				504EC3041FED79650016851F /* App.app */,
 				DD100000000000000001CC01 /* Scoreboard Watch App.app */,
+				EE200000000000000001CC01 /* SwingTrainer Watch App.app */,
+				2A087E503B57A9D9E8A4C818 /* TrainerApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -140,6 +224,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		810CF5F83C58E7F9D0C2C3FC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F8146CEAC59FBA1C5040C545 /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		DD100000000000000002AA01 /* WatchApp */ = {
 			isa = PBXGroup;
 			children = (
@@ -149,6 +241,7 @@
 				DD100000000000000001EE07 /* PhoneSessionManager.swift */,
 				DD100000000000000001EE09 /* WatchMatchManager.swift */,
 				DD100000000000000001EE11 /* SwingDetector.swift */,
+				DD100000000000000003EE11 /* AudioGate.swift */,
 				DD100000000000000001FF01 /* Info.plist */,
 				DD100000000000000001FF02 /* Assets.xcassets */,
 				DD100000000000000001FF04 /* WatchApp.entitlements */,
@@ -162,6 +255,29 @@
 				DD100000000000000001BB01 /* WatchConnectivity.framework */,
 			);
 			name = "Recovered References";
+			sourceTree = "<group>";
+		};
+		EE200000000000000002AA01 /* TrainerWatch */ = {
+			isa = PBXGroup;
+			children = (
+				EE200000000000000001EE01 /* SwingTrainerApp.swift */,
+				EE200000000000000001EE03 /* RecorderContentView.swift */,
+				EE200000000000000001EE05 /* RecordingSession.swift */,
+				EE200000000000000001EE07 /* SwingDetectorLite.swift */,
+				EE200000000000000001FF01 /* Info.plist */,
+				EE200000000000000001FF02 /* Assets.xcassets */,
+				EE200000000000000001FF04 /* SwingTrainer.entitlements */,
+				78A9EC31BF982C5F730EE2F8 /* TrainerWorkout.swift */,
+			);
+			path = TrainerWatch;
+			sourceTree = "<group>";
+		};
+		F8146CEAC59FBA1C5040C545 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				8778707F96689E396A0ABE10 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -180,6 +296,7 @@
 			);
 			dependencies = (
 				DD100000000000000002DD01 /* PBXTargetDependency */,
+				EE200000000000000002DD01 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -206,6 +323,42 @@
 			productReference = DD100000000000000001CC01 /* Scoreboard Watch App.app */;
 			productType = "com.apple.product-type.application";
 		};
+		EE200000000000000001DD01 /* SwingTrainer Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EE200000000000000002BB03 /* Build configuration list for PBXNativeTarget "SwingTrainer Watch App" */;
+			buildPhases = (
+				EE200000000000000001DD02 /* Sources */,
+				EE200000000000000001DD03 /* Frameworks */,
+				EE200000000000000001DD04 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "SwingTrainer Watch App";
+			productName = "SwingTrainer Watch App";
+			productReference = EE200000000000000001CC01 /* SwingTrainer Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F2C0761D2BAB5FB9D98A509F /* TrainerApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6032B9FFB8CD367074C0D3B /* Build configuration list for PBXNativeTarget "TrainerApp" */;
+			buildPhases = (
+				D94F5ACF87560A9296BA6712 /* Sources */,
+				07DC878E3D814DDCDE0ECE8D /* Frameworks */,
+				AB463528A5B4C01EDD0B8D20 /* Resources */,
+				B191AA748F9DC7DDF1F6E123 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E6370744F197BE14AD7B94EA /* PBXTargetDependency */,
+			);
+			name = TrainerApp;
+			productName = TrainerApp;
+			productReference = 2A087E503B57A9D9E8A4C818 /* TrainerApp.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -222,6 +375,10 @@
 						ProvisioningStyle = Automatic;
 					};
 					DD100000000000000001DD01 = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+					EE200000000000000001DD01 = {
 						CreatedOnToolsVersion = 9.2;
 						ProvisioningStyle = Automatic;
 					};
@@ -245,6 +402,8 @@
 			targets = (
 				504EC3031FED79650016851F /* App */,
 				DD100000000000000001DD01 /* Scoreboard Watch App */,
+				EE200000000000000001DD01 /* SwingTrainer Watch App */,
+				F2C0761D2BAB5FB9D98A509F /* TrainerApp */,
 			);
 		};
 /* End PBXProject section */
@@ -263,11 +422,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AB463528A5B4C01EDD0B8D20 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				36D4904D9735DDEFC3D3C62C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD100000000000000001DD04 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				DD100000000000000001FF03 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EE200000000000000001DD04 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EE200000000000000001FF03 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -285,6 +460,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D94F5ACF87560A9296BA6712 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				36209937F782DF033A8EC80A /* TrainerAppMain.swift in Sources */,
+				407CD83AD3FB4141CA5377BF /* WatchReceiver.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DD100000000000000001DD02 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -295,6 +479,19 @@
 				DD100000000000000001EE08 /* PhoneSessionManager.swift in Sources */,
 				DD100000000000000001EE10 /* WatchMatchManager.swift in Sources */,
 				DD100000000000000001EE12 /* SwingDetector.swift in Sources */,
+				DD100000000000000003EE12 /* AudioGate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EE200000000000000001DD02 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EE200000000000000001EE02 /* SwingTrainerApp.swift in Sources */,
+				EE200000000000000001EE04 /* RecorderContentView.swift in Sources */,
+				EE200000000000000001EE06 /* RecordingSession.swift in Sources */,
+				EE200000000000000001EE08 /* SwingDetectorLite.swift in Sources */,
+				FBC675FE0A4D90050489668D /* TrainerWorkout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,6 +502,17 @@
 			isa = PBXTargetDependency;
 			target = DD100000000000000001DD01 /* Scoreboard Watch App */;
 			targetProxy = DD100000000000000002DD02 /* PBXContainerItemProxy */;
+		};
+		E6370744F197BE14AD7B94EA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "SwingTrainer Watch App";
+			target = EE200000000000000001DD01 /* SwingTrainer Watch App */;
+			targetProxy = D0EF8DDB0E2F98AE1952639C /* PBXContainerItemProxy */;
+		};
+		EE200000000000000002DD01 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EE200000000000000001DD01 /* SwingTrainer Watch App */;
+			targetProxy = EE200000000000000002DD02 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -328,6 +536,31 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		4F5A63F17694D530ABBC399E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = J5B2839H8Q;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TrainerApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qq3229311585.trainer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		504EC3141FED79650016851F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
@@ -495,6 +728,32 @@
 			};
 			name = Release;
 		};
+		726FE2A0577069E6636EF33E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = J5B2839H8Q;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TrainerApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qq3229311585.trainer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		DD100000000000000002BB01 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -537,6 +796,48 @@
 			};
 			name = Release;
 		};
+		EE200000000000000002BB01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = TrainerWatch/SwingTrainer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J5B2839H8Q;
+				INFOPLIST_FILE = TrainerWatch/Info.plist;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qq3229311585.trainer.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		EE200000000000000002BB02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = TrainerWatch/SwingTrainer.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J5B2839H8Q;
+				INFOPLIST_FILE = TrainerWatch/Info.plist;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.qq3229311585.trainer.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -558,11 +859,29 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A6032B9FFB8CD367074C0D3B /* Build configuration list for PBXNativeTarget "TrainerApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				726FE2A0577069E6636EF33E /* Release */,
+				4F5A63F17694D530ABBC399E /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		DD100000000000000002BB03 /* Build configuration list for PBXNativeTarget "Scoreboard Watch App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DD100000000000000002BB01 /* Debug */,
 				DD100000000000000002BB02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EE200000000000000002BB03 /* Build configuration list for PBXNativeTarget "SwingTrainer Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EE200000000000000002BB01 /* Debug */,
+				EE200000000000000002BB02 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

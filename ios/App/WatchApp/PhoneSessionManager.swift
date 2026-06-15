@@ -93,17 +93,25 @@ class PhoneSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             matchManager?.applyPhoneState(msg)
         case "stopWorkout":
             matchManager?.applyPhoneStop()
+        case "setAudioGating":
+            if let enabled = msg["enabled"] as? Bool {
+                DispatchQueue.main.async { self.matchManager?.audioGate?.isEnabled = enabled }
+            }
         default:
             break
         }
     }
 
-    /// 处理 applicationContext：提取档案名 + 比赛快照
+    /// 处理 applicationContext：提取档案名 + 音频门控设置 + 比赛快照
     private func applyContext(_ ctx: [String: Any], delay: Double = 0) {
         // 提取档案名
         if let names = ctx["profileNames"] as? [String] {
             UserDefaults.standard.set(names, forKey: "watch_profile_names")
             DispatchQueue.main.async { self.matchManager?.profileNames = names }
+        }
+        // 音频门控开关（applicationContext 通道，无需比赛进行中）
+        if let enabled = ctx["audioGatingEnabled"] as? Bool {
+            DispatchQueue.main.async { self.matchManager?.audioGate?.isEnabled = enabled }
         }
         // 同步比赛快照：既处理进行中，也处理已结束/退出态
         guard let action = ctx["action"] as? String,

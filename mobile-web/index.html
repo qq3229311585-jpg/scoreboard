@@ -2743,6 +2743,27 @@ function toggleProfileSelf(id){
   saveProfilesToStorage();
 }
 
+
+// ─────────────────────────────────────────────────────────
+
+function getAudioGatingEnabled(){
+  const v = localStorage.getItem('audioGatingEnabled');
+  return v === null ? true : v === 'true';  // 默认开启
+}
+
+async function toggleAudioGating(){
+  const next = !getAudioGatingEnabled();
+  localStorage.setItem('audioGatingEnabled', String(next));
+  try{
+    if(typeof WatchPlugin !== 'undefined'){
+      await WatchPlugin.setAudioGating({ enabled: next });
+      console.info('[AudioGate] 已同步到 Watch:', next);
+    }
+  } catch(e){
+    console.warn('[AudioGate] 同步 Watch 失败:', e);
+  }
+}
+
 async function requestHRAuthorization(){
   try{
     if(typeof HealthKitPlugin!=='undefined'){
@@ -2934,6 +2955,22 @@ function renderPersonScreen(id){
 
     <!-- 体能趋势 -->
     ${buildFitnessTrend(p, myMatches)}
+
+    ${p.isSelf ? `
+    <!-- Watch 挥拍检测设置（仅对"本人"档案显示）-->
+    <div class="settings-card" style="margin-top:8px">
+      <div style="color:#fff;font-size:15px;font-weight:700;padding:4px 0 8px">⌚ 挥拍检测</div>
+      <div class="settings-row">
+        <div class="settings-copy">
+          <div class="settings-title">击球声确认</div>
+          <div class="settings-desc">${getAudioGatingEnabled()?'开启：仅听到击球声时才计数，更准确':'关闭：纯传感器模式，适合空挥练习'}</div>
+        </div>
+        <button class="toggle-btn${getAudioGatingEnabled()?' on':''}"
+                onclick="toggleAudioGating();renderPersonScreen(${p.id})">
+          ${getAudioGatingEnabled()?'开启':'关闭'}
+        </button>
+      </div>
+    </div>` : ''}
 
     <!-- 数据导出 -->
     <div class="settings-card" style="margin-top:8px">

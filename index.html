@@ -2743,6 +2743,124 @@ function toggleProfileSelf(id){
   saveProfilesToStorage();
 }
 
+// ── 训练数据采集 ──────────────────────────────────────────
+
+const DEMO_STORAGE_KEY = 'demoSessions_v1';
+
+function getDemoSessions() {
+  try { return JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveDemoSessions(list) {
+  localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(list));
+}
+
+function buildDemoHistory() {
+  const sessions = getDemoSessions();
+  if (!sessions.length) return `<div style="color:rgba(255,255,255,.35);font-size:12px;text-align:center;padding:8px 0">暂无采集记录</div>`;
+  const rows = sessions.slice(0, 8).map(s => {
+    const d = new Date(s.collectedAt);
+    const label = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid rgba(255,255,255,.08)">
+      <div>
+        <span style="color:#fff;font-size:13px;font-weight:600">${s.strokeType}</span>
+        <span style="color:rgba(255,255,255,.45);font-size:12px;margin-left:6px">${s.events?.length||0}拍</span>
+      </div>
+      <span style="color:rgba(255,255,255,.35);font-size:11px">${label}</span>
+    </div>`;
+  }).join('');
+  const exportBtn = `<button class="toggle-btn on" style="width:100%;font-size:12px;margin-top:8px"
+    onclick="exportDemoSessions()">📤 导出全部采集数据</button>`;
+  return rows + exportBtn;
+}
+
+function selectDemoStroke(profileId, stroke, btn) {
+  document.querySelectorAll(`#demo-stroke-btns-${profileId} button`).forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function getSelectedDemoStroke(profileId) {
+  const active = document.querySelector(`#demo-stroke-btns-${profileId} button.on`);
+  return active ? active.textContent.trim() : '高远球';
+}
+
+async function startDemoRecording(profileId) {
+  const strokeType = getSelectedDemoStroke(profileId);
+  const target = parseInt(document.getElementById(`demo-target-${profileId}`)?.value || '50');
+  try {
+    if (typeof WatchPlugin !== 'undefined') {
+      await WatchPlugin.startDemo({ strokeType, targetCount: target });
+    }
+    document.getElementById(`demo-start-btn-${profileId}`).style.display = 'none';
+    document.getElementById(`demo-stop-btn-${profileId}`).style.display = '';
+    console.info('[Demo] 开始采集', strokeType, target);
+  } catch(e) {
+    console.warn('[Demo] startDemo 失败:', e);
+    alert('无法连接 Watch，请确认 Watch 已配对且 App 在前台');
+  }
+}
+
+async function stopDemoRecording(profileId) {
+  try {
+    if (typeof WatchPlugin !== 'undefined') await WatchPlugin.stopDemo({});
+  } catch(e) { console.warn('[Demo] stopDemo 失败:', e); }
+  document.getElementById(`demo-start-btn-${profileId}`).style.display = '';
+  document.getElementById(`demo-stop-btn-${profileId}`).style.display = 'none';
+}
+
+function receiveDemoResult(result) {
+  if (!result || result.action !== 'demoCompleted') return;
+  const sessions = getDemoSessions();
+  sessions.unshift({
+    strokeType:   result.strokeType || '未知',
+    targetCount:  result.targetCount || 0,
+    collectedAt:  result.collectedAt || Date.now(),
+    events:       result.events || []
+  });
+  saveDemoSessions(sessions);
+  // 刷新 UI
+  const selfId = profiles.find(p => p.isSelf)?.id;
+  if (selfId != null) {
+    const hist = document.getElementById(`demo-history-${selfId}`);
+    if (hist) hist.innerHTML = buildDemoHistory();
+    document.getElementById(`demo-start-btn-${selfId}`).style.display = '';
+    document.getElementById(`demo-stop-btn-${selfId}`).style.display = 'none';
+  }
+  console.info('[Demo] 收到采集结果', result.strokeType, result.events?.length, '拍');
+}
+
+function exportDemoSessions() {
+  const sessions = getDemoSessions();
+  if (!sessions.length) { alert('暂无采集数据'); return; }
+  const blob = new Blob([JSON.stringify(sessions, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `swing_training_data_${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─────────────────────────────────────────────────────────
+
+function getAudioGatingEnabled(){
+  const v = localStorage.getItem('audioGatingEnabled');
+  return v === null ? true : v === 'true';  // 默认开启
+}
+
+async function toggleAudioGating(){
+  const next = !getAudioGatingEnabled();
+  localStorage.setItem('audioGatingEnabled', String(next));
+  try{
+    if(typeof WatchPlugin !== 'undefined'){
+      await WatchPlugin.setAudioGating({ enabled: next });
+      console.info('[AudioGate] 已同步到 Watch:', next);
+    }
+  } catch(e){
+    console.warn('[AudioGate] 同步 Watch 失败:', e);
+  }
+}
+
 async function requestHRAuthorization(){
   try{
     if(typeof HealthKitPlugin!=='undefined'){
@@ -2934,6 +3052,56 @@ function renderPersonScreen(id){
 
     <!-- 体能趋势 -->
     ${buildFitnessTrend(p, myMatches)}
+
+    ${p.isSelf ? `
+    <!-- 训练数据采集 -->
+    <div class="settings-card" style="margin-top:8px" id="demo-card-${p.id}">
+      <div style="color:#fff;font-size:15px;font-weight:700;padding:4px 0 8px">🏸 训练数据采集</div>
+      <div class="settings-desc" style="margin-bottom:10px;color:rgba(255,255,255,.55)">选择球技后开始，Watch 自动记录每次挥拍特征，完成后导出给 AI 优化算法。</div>
+
+      <!-- 球技选择 -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="demo-stroke-btns-${p.id}">
+        ${['高远球','杀球','劈吊','网前推球','放网','挑球'].map((s,i)=>`
+          <button class="toggle-btn${i===0?' on':''}"
+                  style="font-size:12px;padding:4px 10px"
+                  onclick="selectDemoStroke(${p.id},'${s}',this)">${s}</button>
+        `).join('')}
+      </div>
+
+      <!-- 目标拍数 -->
+      <div class="settings-row" style="margin-bottom:10px">
+        <div class="settings-copy"><div class="settings-title">目标拍数</div></div>
+        <select id="demo-target-${p.id}" style="background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;padding:4px 8px;font-size:14px">
+          ${[20,30,50,100].map(n=>`<option value="${n}"${n===50?' selected':''}>${n} 拍</option>`).join('')}
+        </select>
+      </div>
+
+      <!-- 开始/停止按钮 -->
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="demo-start-btn-${p.id}" class="toggle-btn on" style="flex:1;font-size:13px"
+                onclick="startDemoRecording(${p.id})">▶ 开始采集</button>
+        <button id="demo-stop-btn-${p.id}" class="toggle-btn" style="flex:1;font-size:13px;display:none"
+                onclick="stopDemoRecording(${p.id})">⏹ 停止</button>
+      </div>
+
+      <!-- 历史采集记录 -->
+      <div id="demo-history-${p.id}">${buildDemoHistory()}</div>
+    </div>
+
+    <!-- Watch 挥拍检测设置（仅对"本人"档案显示）-->
+    <div class="settings-card" style="margin-top:8px">
+      <div style="color:#fff;font-size:15px;font-weight:700;padding:4px 0 8px">⌚ 挥拍检测</div>
+      <div class="settings-row">
+        <div class="settings-copy">
+          <div class="settings-title">击球声确认</div>
+          <div class="settings-desc">${getAudioGatingEnabled()?'开启：仅听到击球声时才计数，更准确':'关闭：纯传感器模式，适合空挥练习'}</div>
+        </div>
+        <button class="toggle-btn${getAudioGatingEnabled()?' on':''}"
+                onclick="toggleAudioGating();renderPersonScreen(${p.id})">
+          ${getAudioGatingEnabled()?'开启':'关闭'}
+        </button>
+      </div>
+    </div>` : ''}
 
     <!-- 数据导出 -->
     <div class="settings-card" style="margin-top:8px">
@@ -3511,6 +3679,10 @@ function initWatchHR() {
         }
       });
     }
+    WatchPlugin.addListener('demoCompleted', data => {
+      console.info('[Demo] demoCompleted received', data);
+      receiveDemoResult(data);
+    });
     if (!watchStopRequestedListenerHandle) {
       watchStopRequestedListenerHandle = WatchPlugin.addListener('watchStopRequested', () => {
         console.info('[Watch][JS] watchStopRequested');
@@ -4029,7 +4201,7 @@ function renderDetail(r){
       <div class="set-row">
         <span class="set-label">每球</span>
         <span class="set-score">${swingsPerPt}</span>
-        <span class="set-time">次/分</span>
+        <span class="set-time">次/球</span>
       </div>
     </div></div>`;
   }

@@ -37,6 +37,7 @@ final class WatchMatchManager: ObservableObject {
     weak var workoutManager: WorkoutManager?
     weak var phoneSession: PhoneSessionManager?
     weak var swingDetector: SwingDetector?
+    var audioGate: AudioGate?
 
     @Published var profileNames: [String] = []   // 从手机同步过来的档案名单
     @Published var isMatchActive = false
@@ -128,6 +129,7 @@ final class WatchMatchManager: ObservableObject {
         workoutManager?.start(sport: sport)
         swingDetector?.reset()
         swingDetector?.start()
+        if audioGate?.isEnabled == true { audioGate?.startListening() }
         startTicker()
     }
 
@@ -138,6 +140,7 @@ final class WatchMatchManager: ObservableObject {
         stopTicker()
         workoutManager?.stop()
         swingDetector?.stop()
+        audioGate?.stopListening()
         isMatchActive = false
         isPaused = false
         canUndo = false
@@ -197,6 +200,7 @@ final class WatchMatchManager: ObservableObject {
         stopTicker()
         workoutManager?.stop()
         swingDetector?.stop()
+        audioGate?.stopListening()
         matchStartDate = nil
         pausedAccumulated = 0
         pausedAt = nil
@@ -311,6 +315,7 @@ final class WatchMatchManager: ObservableObject {
         workoutManager?.start(sport: sport)
         swingDetector?.reset()
         swingDetector?.start()
+        if audioGate?.isEnabled == true { audioGate?.startListening() }
     }
 
     func applyPhoneStop() {
@@ -324,6 +329,7 @@ final class WatchMatchManager: ObservableObject {
         stopTicker()
         workoutManager?.stop()
         swingDetector?.stop()
+        audioGate?.stopListening()
     }
 
     func applyPhoneState(_ msg: [String: Any]) {

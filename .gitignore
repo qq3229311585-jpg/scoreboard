@@ -12,3 +12,6 @@ backups/
 # 临时/日志/备份
 *.log
 *.bak
+
+# Xcode 构建产物（codex -derivedDataPath）
+build/

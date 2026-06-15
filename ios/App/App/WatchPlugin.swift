@@ -16,7 +16,8 @@ public class WatchPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "stopWorkout", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "syncMatchState", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "syncProfiles", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "consumePendingWatchMatches", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "consumePendingWatchMatches", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setAudioGating", returnType: CAPPluginReturnPromise)
     ]
 
     private let pendingWatchMatchesKey = "pending_watch_matches_v1"
@@ -89,6 +90,23 @@ public class WatchPlugin: CAPPlugin, CAPBridgedPlugin {
         if ctx["action"] == nil { ctx["action"] = "syncMatchState" }
         lastContext = ctx
         updateContext(ctx, call: call)
+    }
+
+    /// 同步音频门控开关到 Watch（applicationContext 持久化 + sendMessage 即时通知）
+    @objc func setAudioGating(_ call: CAPPluginCall) {
+        let enabled = call.getBool("enabled") ?? true
+        var ctx = lastContext
+        ctx["audioGatingEnabled"] = enabled
+        if ctx["action"] == nil { ctx["action"] = "syncMatchState" }
+        lastContext = ctx
+        updateContext(ctx, call: call)
+        // 同时通过 sendMessage 即时通知（Watch 可达时立即生效）
+        if WCSession.isSupported() && WCSession.default.isReachable {
+            WCSession.default.sendMessage(
+                ["action": "setAudioGating", "enabled": enabled],
+                replyHandler: nil, errorHandler: nil
+            )
+        }
     }
 
     // MARK: - Layer 3: 保证送达（transferUserInfo，消费未读比赛记录）
