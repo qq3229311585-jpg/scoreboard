@@ -36,6 +36,7 @@ final class WatchMatchManager: ObservableObject {
 
     weak var workoutManager: WorkoutManager?
     weak var phoneSession: PhoneSessionManager?
+    weak var swingDetector: SwingDetector?
 
     @Published var profileNames: [String] = []   // 从手机同步过来的档案名单
     @Published var isMatchActive = false
@@ -125,6 +126,8 @@ final class WatchMatchManager: ObservableObject {
         canUndo = false
         print("[Watch][Match] startLocalMatch sport=\(sport) ptWin=\(self.ptWin) totalSets=\(self.totalSets) setWin=\(self.setWin) names=\(teamAName),\(teamBName)")
         workoutManager?.start(sport: sport)
+        swingDetector?.reset()
+        swingDetector?.start()
         startTicker()
     }
 
@@ -134,6 +137,7 @@ final class WatchMatchManager: ObservableObject {
         pendingSetupSportName = sportLabel
         stopTicker()
         workoutManager?.stop()
+        swingDetector?.stop()
         isMatchActive = false
         isPaused = false
         canUndo = false
@@ -192,6 +196,7 @@ final class WatchMatchManager: ObservableObject {
         summary = "比赛已结束"
         stopTicker()
         workoutManager?.stop()
+        swingDetector?.stop()
         matchStartDate = nil
         pausedAccumulated = 0
         pausedAt = nil
@@ -304,6 +309,8 @@ final class WatchMatchManager: ObservableObject {
         pausedAt = nil
         print("[Watch][Match] applyPhoneStart sport=\(sport)")
         workoutManager?.start(sport: sport)
+        swingDetector?.reset()
+        swingDetector?.start()
     }
 
     func applyPhoneStop() {
@@ -316,6 +323,7 @@ final class WatchMatchManager: ObservableObject {
         summary = "手机端已结束"
         stopTicker()
         workoutManager?.stop()
+        swingDetector?.stop()
     }
 
     func applyPhoneState(_ msg: [String: Any]) {
@@ -579,6 +587,7 @@ final class WatchMatchManager: ObservableObject {
                 "duration": elapsedSeconds * 1000,
                 "heartRateTimeline": heartRateTimeline,
                 "hrPlayerIdx": 0,
+                "swingCount": swingDetector?.swingCount ?? 0,
             ]
         ]
     }

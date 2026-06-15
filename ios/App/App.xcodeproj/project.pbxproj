@@ -23,6 +23,7 @@
 		DD100000000000000001EE06 /* WorkoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001EE05 /* WorkoutManager.swift */; };
 		DD100000000000000001EE08 /* PhoneSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001EE07 /* PhoneSessionManager.swift */; };
 		DD100000000000000001EE10 /* WatchMatchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001EE09 /* WatchMatchManager.swift */; };
+		DD100000000000000001EE12 /* SwingDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001EE11 /* SwingDetector.swift */; };
 		DD100000000000000001FF03 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD100000000000000001FF02 /* Assets.xcassets */; };
 		DD100000000000000002CC02 /* Scoreboard Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = DD100000000000000001CC01 /* Scoreboard Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		EDF095262FD8736F00418E53 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DD100000000000000001BB01 /* WatchConnectivity.framework */; };
@@ -74,6 +75,7 @@
 		DD100000000000000001EE05 /* WorkoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutManager.swift; sourceTree = "<group>"; };
 		DD100000000000000001EE07 /* PhoneSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneSessionManager.swift; sourceTree = "<group>"; };
 		DD100000000000000001EE09 /* WatchMatchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchMatchManager.swift; sourceTree = "<group>"; };
+		DD100000000000000001EE11 /* SwingDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwingDetector.swift; sourceTree = "<group>"; };
 		DD100000000000000001FF01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DD100000000000000001FF02 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		DD100000000000000001FF04 /* WatchApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WatchApp.entitlements; sourceTree = "<group>"; };
@@ -146,6 +148,7 @@
 				DD100000000000000001EE05 /* WorkoutManager.swift */,
 				DD100000000000000001EE07 /* PhoneSessionManager.swift */,
 				DD100000000000000001EE09 /* WatchMatchManager.swift */,
+				DD100000000000000001EE11 /* SwingDetector.swift */,
 				DD100000000000000001FF01 /* Info.plist */,
 				DD100000000000000001FF02 /* Assets.xcassets */,
 				DD100000000000000001FF04 /* WatchApp.entitlements */,
@@ -291,6 +294,7 @@
 				DD100000000000000001EE06 /* WorkoutManager.swift in Sources */,
 				DD100000000000000001EE08 /* PhoneSessionManager.swift in Sources */,
 				DD100000000000000001EE10 /* WatchMatchManager.swift in Sources */,
+				DD100000000000000001EE12 /* SwingDetector.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -304,6 +304,7 @@ struct MatchView: View {
     @EnvironmentObject var workout: WorkoutManager
     @EnvironmentObject var match: WatchMatchManager
     @EnvironmentObject var phone: PhoneSessionManager
+    @EnvironmentObject var swingDetector: SwingDetector
 
     @State private var showFinishConfirm = false
 
@@ -379,7 +380,7 @@ struct MatchView: View {
                     .font(.system(size: 9))
                     .foregroundStyle(Color(hex: "#FF3B30"))
                 Text(workout.heartRate > 0 ? "\(Int(workout.heartRate))" : "--")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
             }
             .frame(minWidth: 44, alignment: .leading)
@@ -399,7 +400,17 @@ struct MatchView: View {
 
             Spacer()
 
-            HStack(spacing: 2) {
+            HStack(spacing: 4) {
+                if swingDetector.swingCount > 0 {
+                    HStack(spacing: 1) {
+                        Image(systemName: "figure.badminton")
+                            .font(.system(size: 9))
+                            .foregroundStyle(Color(hex: "#FFD60A"))
+                        Text("\(swingDetector.swingCount)")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color(hex: "#FFD60A"))
+                    }
+                }
                 if phone.isReachable {
                     Image(systemName: "iphone")
                         .font(.system(size: 10))

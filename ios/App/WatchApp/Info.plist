@@ -18,6 +18,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSMotionUsageDescription</key>
+	<string>通过手腕运动传感器自动统计挥拍次数。</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>比赛期间记录心率，用于复盘运动强度分析。</string>
 	<key>NSHealthUpdateUsageDescription</key>
