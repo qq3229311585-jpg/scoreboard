@@ -40,6 +40,7 @@ final class WatchMatchManager: ObservableObject {
     var audioGate: AudioGate?
 
     @Published var profileNames: [String] = []   // 从手机同步过来的档案名单
+    @Published var hrPersonName: String = ""      // 个人中心开了心率监测的那个人；本地赛据此决定是否开心率+录音
     @Published var isMatchActive = false
     @Published var sport = "badminton"
     @Published var sportLabel = "羽毛球"
@@ -59,8 +60,18 @@ final class WatchMatchManager: ObservableObject {
     @Published var pendingSetupSport: String? = nil
     @Published var pendingSetupSportName: String? = nil
 
+    /// 比赛结束后的结算结果，非 nil 时 ContentView 显示结算页（本地赛 + 镜像赛通用）
+    struct Result: Equatable {
+        let winnerName: String
+        let scoreLine: String
+    }
+    @Published var lastResult: Result? = nil
+
     private var ticker: Timer?
     private var history: [Snapshot] = []
+    // 镜像赛身份标识（手机的 S.startTime）：用于区分"同一场/新一场/刚结束那场"，避免旧高分被 max 残留
+    private var lastSeenPhoneMatchStartMs: Int = 0
+    private var finishedPhoneMatchStartMs: Int = 0
     private var periodIndex = 1
     private var ptWin = 21
     private var totalSets = 3
@@ -117,6 +128,7 @@ final class WatchMatchManager: ObservableObject {
         pausedAt = nil
         lastEventElapsedMs = 0
         isPaused = false
+        lastResult = nil
         isMatchActive = true
         sessionSource = .local
         pendingSetupSport = nil
@@ -125,11 +137,12 @@ final class WatchMatchManager: ObservableObject {
         refreshProgress()
         updateSummary()
         canUndo = false
-        print("[Watch][Match] startLocalMatch sport=\(sport) ptWin=\(self.ptWin) totalSets=\(self.totalSets) setWin=\(self.setWin) names=\(teamAName),\(teamBName)")
-        workoutManager?.start(sport: sport)
+        let trackWearer = shouldTrackWearer()
+        print("[Watch][Match] startLocalMatch sport=\(sport) names=\(teamAName),\(teamBName) hrPerson=\(hrPersonName) trackWearer=\(trackWearer)")
+        workoutManager?.start(sport: sport, trackHR: trackWearer)
         swingDetector?.reset()
         swingDetector?.start()
-        if audioGate?.isEnabled == true { audioGate?.startListening() }
+        updateAudioGate(trackWearer: trackWearer)
         startTicker()
     }
 
@@ -189,6 +202,8 @@ final class WatchMatchManager: ObservableObject {
         let payload = buildCompletedPayload()
         print("[Watch][Match] finishLocalMatch winnerPayload=\(payload)")
         phoneSession?.sendCompletedMatch(payload)
+        lastResult = makeResult()
+        resetScoreState()   // 结束后立即清零比分/局/事件，防止残留状态被下一场或心跳重新激活后继续累加
         isMatchActive = false
         isPaused = false
         canUndo = false
@@ -204,6 +219,86 @@ final class WatchMatchManager: ObservableObject {
         matchStartDate = nil
         pausedAccumulated = 0
         pausedAt = nil
+    }
+
+    /// 镜像赛（手机开局、手表记分）在手表上结束。
+    /// 关键：以手表的最终状态为权威，构建完整记录经 transferUserInfo 保证送达手机
+    /// （手机端 watchMatchFinished 去重持久化 + 收尾 UI），不再依赖手机在线自存 ——
+    /// 这样手机被杀/后台时记录也不丢。逻辑与 finishLocalMatch 一致，仅 guard 改为 .phone。
+    func finishMirrorMatch() {
+        guard sessionSource == .phone else { return }
+        refreshElapsed()
+
+        if !supportsMultiPoint {
+            if teamAScore != teamBScore {
+                let sw = teamAScore > teamBScore ? 0 : 1
+                setScores.append([teamAScore, teamBScore])
+                setWins[sw] += 1
+                setTimes.append(Int(Date().timeIntervalSince1970 * 1000))
+            }
+            if setWins[0] == setWins[1] {
+                summary = "当前平分，请继续比赛"
+                WKInterfaceDevice.current().play(.retry)
+                return
+            }
+        } else {
+            if teamAScore == teamBScore {
+                summary = "当前平分，请继续比赛"
+                WKInterfaceDevice.current().play(.retry)
+                return
+            }
+        }
+
+        let payload = buildCompletedPayload()
+        print("[Watch][Match] finishMirrorMatch winnerPayload=\(payload)")
+        phoneSession?.sendCompletedMatch(payload)   // 保证送达，手机端权威保存
+        // 同时即时通知手机结束，让它尽快把 S.winner 置位、停发"进行中"心跳，
+        // 避免本地刚结束、手机仍报 active 的旧心跳把手表重新激活回记分页。
+        phoneSession?.requestStopFromWatch()
+        // 标记这一场已结束：之后带相同 matchStartMs 的滞后心跳一律忽略
+        finishedPhoneMatchStartMs = lastSeenPhoneMatchStartMs
+        lastResult = makeResult()
+        resetScoreState()   // 结束后立即清零比分/局/事件，防止残留状态被下一场或心跳重新激活后继续累加
+        isMatchActive = false
+        isPaused = false
+        canUndo = false
+        history.removeAll()
+        sessionSource = .none
+        summary = "比赛已结束"
+        stopTicker()
+        workoutManager?.stop()
+        swingDetector?.stop()
+        audioGate?.stopListening()
+        matchStartDate = nil
+        pausedAccumulated = 0
+        pausedAt = nil
+    }
+
+    /// 清空一场比赛的全部比分/局/事件状态。
+    /// 结束比赛后必须调用 —— 否则残留的 teamAScore/setWins/setScores/matchEvents 会在
+    /// 手表被手机心跳重新激活（applyPhoneState 走 max 对齐、不重置）时被当作上一场继续累加，
+    /// 导致"继续上局比分""局分多加"等问题。
+    private func resetScoreState() {
+        teamAScore = 0
+        teamBScore = 0
+        setWins = [0, 0]
+        setScores.removeAll()
+        setTimes.removeAll()
+        matchEvents.removeAll()
+        heartRateTimeline.removeAll()
+        periodIndex = 1
+        elapsedSeconds = 0
+    }
+
+    /// 根据当前最终状态构建结算结果（胜者名 + 比分行）
+    private func makeResult() -> Result {
+        let winner = supportsMultiPoint
+            ? (teamAScore > teamBScore ? 0 : 1)
+            : (setWins[0] >= setWins[1] ? 0 : 1)
+        let scoreLine = supportsMultiPoint
+            ? "\(teamAScore) : \(teamBScore)"
+            : "\(setWins[0]) : \(setWins[1])"
+        return Result(winnerName: winner == 0 ? teamAName : teamBName, scoreLine: scoreLine)
     }
 
     func addPoint(team: Int) {
@@ -288,11 +383,14 @@ final class WatchMatchManager: ObservableObject {
         summary = "进入\(periodLabel)"
     }
 
-    func applyPhoneStart(sport: String) {
+    func applyPhoneStart(sport: String, trackWearer: Bool = true) {
         phoneSession?.resetControlSeq()
         sessionSource = .phone
         self.sport = sport
         sportLabel = displayName(for: sport)
+        lastResult = nil
+        lastSeenPhoneMatchStartMs = 0   // 新一场：清身份标识，首个 syncMatchState 会按新场采纳
+        finishedPhoneMatchStartMs = 0
         isMatchActive = true
         isPaused = false
         canUndo = false
@@ -301,6 +399,7 @@ final class WatchMatchManager: ObservableObject {
         setWins = [0, 0]
         setScores.removeAll()
         setTimes.removeAll()
+        matchEvents.removeAll()
         history.removeAll()
         heartRateTimeline.removeAll()
         teamAScore = 0
@@ -311,11 +410,13 @@ final class WatchMatchManager: ObservableObject {
         matchStartDate = Date()
         pausedAccumulated = 0
         pausedAt = nil
-        print("[Watch][Match] applyPhoneStart sport=\(sport)")
-        workoutManager?.start(sport: sport)
+        print("[Watch][Match] applyPhoneStart sport=\(sport) trackWearer=\(trackWearer)")
+        // workout 照常开（保后台保活，记分稳）；但只有 trackWearer 时才读心率。
+        workoutManager?.start(sport: sport, trackHR: trackWearer)
         swingDetector?.reset()
         swingDetector?.start()
-        if audioGate?.isEnabled == true { audioGate?.startListening() }
+        // 录音(AudioGate)只在追踪佩戴者、且用户开了开关时才启动；否则显式停掉（防上一场残留）
+        updateAudioGate(trackWearer: trackWearer)
     }
 
     func applyPhoneStop() {
@@ -341,6 +442,14 @@ final class WatchMatchManager: ObservableObject {
         DispatchQueue.main.async {
             let isActive = msg["isActive"] as? Bool ?? false
 
+            // 守卫：手表刚在本地结束镜像赛、正显示结算页（lastResult != nil）时，
+            // 忽略手机仍报"进行中"的旧心跳，避免被重新激活回记分页、导致再次结束把局分加两遍。
+            // 等手机处理完结束推送 isActive=false，再走下面的清理分支。
+            if isActive && self.lastResult != nil {
+                print("[Watch][Match] applyPhoneState ignored (settling, lastResult set)")
+                return
+            }
+
             // 手机说结束了 → 跟着结束（独立赛不受影响：它自己的 finishLocalMatch 才负责清理）
             if !isActive {
                 if self.sessionSource == .phone {
@@ -353,6 +462,26 @@ final class WatchMatchManager: ObservableObject {
                     self.workoutManager?.stop()
                 }
                 return
+            }
+
+            // 比赛身份判断（时间戳对齐）：用手机的 matchStartMs 区分是不是同一场。
+            // 仅对镜像赛/空闲生效，手表自己开的独立赛（.local）不被手机快照干扰。
+            let phoneStartMs = msg["matchStartMs"] as? Int ?? 0
+            if phoneStartMs != 0 && self.sessionSource != .local {
+                // 刚结束的那一场的滞后心跳（手机还没处理完结束）→ 忽略，别被拉回记分页
+                if phoneStartMs == self.finishedPhoneMatchStartMs {
+                    print("[Watch][Match] applyPhoneState ignored (finished match \(phoneStartMs) lagging heartbeat)")
+                    return
+                }
+                // 新的一场（matchStartMs 变了）→ 先清零本地残留，下面 max 对齐自然采纳手机新值，
+                // 而不会被上一场的旧高分卡住。
+                if phoneStartMs != self.lastSeenPhoneMatchStartMs {
+                    print("[Watch][Match] applyPhoneState new match \(phoneStartMs)，重置本地状态")
+                    self.resetScoreState()
+                    self.lastSeenPhoneMatchStartMs = phoneStartMs
+                    self.finishedPhoneMatchStartMs = 0
+                    self.lastResult = nil
+                }
             }
 
             // 规则字段：永远跟手机走（手机是规则权威）
@@ -370,6 +499,7 @@ final class WatchMatchManager: ObservableObject {
             self.summary = msg["summary"] as? String ?? self.summary
             // 暂停状态：手机权威（防止手表本地暂停状态和手机不一致）
             self.isPaused = msg["isPaused"] as? Bool ?? false
+            let trackWearer = self.shouldTrackWearer()
 
             // 比分/局数/时间：max 对齐（核心）
             let phoneA = msg["teamAScore"] as? Int ?? 0
@@ -399,9 +529,22 @@ final class WatchMatchManager: ObservableObject {
             } else if self.ticker == nil {
                 self.startTicker()
             }
-            if self.workoutManager?.isActive != true {
-                self.workoutManager?.start(sport: self.sport)
-            }
+            // applyPhoneState 是可靠的 applicationContext 通道，必须和 applyPhoneStart 走同一套门控：
+            // 否则 sendMessage 丢了时会退化成“谁都记心率 + 录音永远不启动”。
+            self.workoutManager?.start(sport: self.sport, trackHR: trackWearer)
+            self.updateAudioGate(trackWearer: trackWearer)
+        }
+    }
+
+    private func shouldTrackWearer() -> Bool {
+        !hrPersonName.isEmpty && (teamAName == hrPersonName || teamBName == hrPersonName)
+    }
+
+    private func updateAudioGate(trackWearer: Bool) {
+        if trackWearer && audioGate?.isEnabled == true {
+            audioGate?.startListening()
+        } else {
+            audioGate?.stopListening()
         }
     }
 

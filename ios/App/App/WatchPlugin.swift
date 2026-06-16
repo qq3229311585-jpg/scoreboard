@@ -59,7 +59,9 @@ public class WatchPlugin: CAPPlugin, CAPBridgedPlugin {
         processedControlSeqs.removeAll()   // 新比赛开始，清空上局 seq
         let sport      = call.getString("sport")      ?? "badminton"
         let playerName = call.getString("playerName") ?? ""
-        sendRealtime(["action": "startWorkout", "sport": sport, "playerName": playerName], call: call)
+        let trackWearer = call.getBool("trackWearer") ?? true
+        sendRealtime(["action": "startWorkout", "sport": sport, "playerName": playerName,
+                      "trackWearer": trackWearer], call: call)
     }
 
     /// 让手表退出记分
@@ -74,9 +76,18 @@ public class WatchPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func syncMatchState(_ call: CAPPluginCall) {
         var payload = extractPayload(from: call)
         payload["action"] = "syncMatchState"
-        // 保留已缓存的 profileNames，避免覆盖掉
+        // 保留已缓存的 profileNames / hrPersonName / audioGatingEnabled，避免被这次的比分快照覆盖掉。
+        // 这三者由各自独立的 RPC（syncProfiles / setAudioGating）写入 lastContext，
+        // 而 syncMatchState 在每次得分都会触发（render() 每次都调），若不保留就会在比赛进行中被反复冲掉，
+        // 导致手表收到的快照丢失"谁该追踪心率"信息（实测：开赛后第一次得分就把 hrPersonName 冲没了）。
         if let names = lastContext["profileNames"] {
             payload["profileNames"] = names
+        }
+        if let hr = lastContext["hrPersonName"] {
+            payload["hrPersonName"] = hr
+        }
+        if let gating = lastContext["audioGatingEnabled"] {
+            payload["audioGatingEnabled"] = gating
         }
         lastContext = payload
         updateContext(payload, call: call)
@@ -87,6 +98,7 @@ public class WatchPlugin: CAPPlugin, CAPBridgedPlugin {
         let names = call.getArray("names") as? [String] ?? []
         var ctx = lastContext
         ctx["profileNames"] = names
+        ctx["hrPersonName"] = call.getString("hrPersonName") ?? ""
         if ctx["action"] == nil { ctx["action"] = "syncMatchState" }
         lastContext = ctx
         updateContext(ctx, call: call)

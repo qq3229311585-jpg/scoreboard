@@ -71,12 +71,19 @@ class PhoneSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         if let saved = UserDefaults.standard.stringArray(forKey: "watch_profile_names") {
             DispatchQueue.main.async { self.matchManager?.profileNames = saved }
         }
+        if let savedHR = UserDefaults.standard.string(forKey: "watch_hr_person_name") {
+            DispatchQueue.main.async { self.matchManager?.hrPersonName = savedHR }
+        }
         let ctx = WCSession.default.receivedApplicationContext
         guard !ctx.isEmpty else { return }
         // 只提取档案名，不恢复比赛快照
         if let names = ctx["profileNames"] as? [String] {
             UserDefaults.standard.set(names, forKey: "watch_profile_names")
             DispatchQueue.main.async { self.matchManager?.profileNames = names }
+        }
+        if let hr = ctx["hrPersonName"] as? String {
+            UserDefaults.standard.set(hr, forKey: "watch_hr_person_name")
+            DispatchQueue.main.async { self.matchManager?.hrPersonName = hr }
         }
     }
 
@@ -88,7 +95,8 @@ class PhoneSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         switch action {
         case "startWorkout":
             let sport = msg["sport"] as? String ?? "badminton"
-            matchManager?.applyPhoneStart(sport: sport)
+            let trackWearer = msg["trackWearer"] as? Bool ?? true
+            matchManager?.applyPhoneStart(sport: sport, trackWearer: trackWearer)
         case "syncMatchState":
             matchManager?.applyPhoneState(msg)
         case "stopWorkout":
@@ -108,6 +116,11 @@ class PhoneSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         if let names = ctx["profileNames"] as? [String] {
             UserDefaults.standard.set(names, forKey: "watch_profile_names")
             DispatchQueue.main.async { self.matchManager?.profileNames = names }
+        }
+        // 提取"开了心率监测的人"的名字
+        if let hr = ctx["hrPersonName"] as? String {
+            UserDefaults.standard.set(hr, forKey: "watch_hr_person_name")
+            DispatchQueue.main.async { self.matchManager?.hrPersonName = hr }
         }
         // 音频门控开关（applicationContext 通道，无需比赛进行中）
         if let enabled = ctx["audioGatingEnabled"] as? Bool {

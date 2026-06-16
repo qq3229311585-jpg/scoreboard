@@ -28,11 +28,30 @@ class WorkoutManager: NSObject, ObservableObject {
         }
     }
 
+    /// 是否读取/上报心率。false 时 workout 照常跑（保后台保活、记分稳），但不开心率流、不回报心率。
+    private var trackHR = true
+
+    /// 在 workout 已活跃时切换心率追踪状态（连续开赛、上一场没停干净时用）
+    private func updateHRTracking(_ track: Bool) {
+        guard track != trackHR else { return }
+        trackHR = track
+        if track {
+            startHeartRateStreaming(from: Date())
+        } else {
+            stopHeartRateStreaming()
+            DispatchQueue.main.async { self.heartRate = 0 }
+        }
+    }
+
     // MARK: - 开始
-    func start(sport: String) {
+    func start(sport: String, trackHR: Bool = true) {
         if isActive {
+            // 上一场 workout 还活着（连续开赛没干净结束）：至少把心率追踪状态更新对，
+            // 否则会沿用上一场的 trackHR（典型 bug：上一场含 HJT 在采心率，下一场不含也继续采）。
+            updateHRTracking(trackHR)
             return
         }
+        self.trackHR = trackHR
         sportName = displayName(for: sport)
         requestAuthorization { [weak self] _ in
             guard let self else { return }
@@ -52,7 +71,7 @@ class WorkoutManager: NSObject, ObservableObject {
                 self.heartRateQueryAnchor = nil
                 self.session?.startActivity(with: now)
                 self.builder?.beginCollection(withStart: now) { _, _ in }
-                self.startHeartRateStreaming(from: now)
+                if trackHR { self.startHeartRateStreaming(from: now) }
                 DispatchQueue.main.async {
                     self.isActive = true
                     self.heartRate = 0
@@ -134,6 +153,7 @@ class WorkoutManager: NSObject, ObservableObject {
     }
 
     private func publishHeartRate(_ bpm: Double, at date: Date = Date()) {
+        guard trackHR else { return }   // 不追踪佩戴者时不上报心率（builder 仍会采集，但这里拦掉）
         guard bpm > 0 else { return }
         if let lastHeartRateSampleDate, date <= lastHeartRateSampleDate {
             return

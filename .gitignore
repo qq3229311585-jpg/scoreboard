@@ -15,3 +15,7 @@ backups/
 
 # Xcode 构建产物（codex -derivedDataPath）
 build/
+
+# 本机工具配置/缓存（含本机绝对路径，不应跨机器共享）
+.mcp.json
+.serena/

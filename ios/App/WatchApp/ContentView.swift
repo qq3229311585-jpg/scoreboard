@@ -12,7 +12,9 @@ struct ContentView: View {
         // 记分页只由 match.isMatchActive 驱动，不再混入 workout.isActive：
         // HealthKit workout 的启停是异步的，若把它作为进入条件，forceReset/结束时
         // 会因 workout 还没停而短暂停留在 MatchView，产生"闪一下设置页又回首页"的竞态。
-        if match.isMatchActive {
+        if let result = match.lastResult {
+            SettlementView(result: result)
+        } else if match.isMatchActive {
             MatchView()
         } else {
             NavigationStack {
@@ -362,10 +364,9 @@ struct MatchView: View {
             Button("结束", role: .destructive) {
                 if match.isLocalSession { match.finishLocalMatch() }
                 else {
-                    // .phone 模式：通知手机的同时本地也退出。
-                    // 用 async 让 alert 先 dismiss 完，再切 isMatchActive，避免同帧状态切换 UI 卡死。
-                    phone.requestStopFromWatch()
-                    DispatchQueue.main.async { match.applyPhoneStop() }
+                    // .phone 镜像赛：手表以最终状态为权威，构建记录经 transferUserInfo
+                    // 保证送达手机（手机死活都不丢），不再仅发 stopWorkout 依赖手机自存。
+                    match.finishMirrorMatch()
                 }
             }
             Button("取消", role: .cancel) {}
@@ -658,10 +659,9 @@ struct PauseOverlay: View {
             Button("结束", role: .destructive) {
                 if match.isLocalSession { match.finishLocalMatch() }
                 else {
-                    // .phone 模式：通知手机的同时本地也退出。
-                    // 用 async 让 alert 先 dismiss 完，再切 isMatchActive，避免同帧状态切换 UI 卡死。
-                    phone.requestStopFromWatch()
-                    DispatchQueue.main.async { match.applyPhoneStop() }
+                    // .phone 镜像赛：手表以最终状态为权威，构建记录经 transferUserInfo
+                    // 保证送达手机（手机死活都不丢），不再仅发 stopWorkout 依赖手机自存。
+                    match.finishMirrorMatch()
                 }
             }
             Button("取消", role: .cancel) {}
@@ -691,6 +691,63 @@ struct PauseOverlay: View {
 
     private func haptic(_ t: WKHapticType) { WKInterfaceDevice.current().play(t) }
     private func formatTime(_ s: Int) -> String { String(format: "%02d:%02d", s / 60, s % 60) }
+}
+
+// MARK: - 结算页
+
+struct SettlementView: View {
+    @EnvironmentObject var match: WatchMatchManager
+    let result: WatchMatchManager.Result
+    @State private var appeared = false
+
+    var body: some View {
+        // 单屏结算页：胜者名当主角（大字），简洁现代单绿 accent，不滚动
+        VStack(spacing: 5) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 28, weight: .medium))
+                .foregroundStyle(Color(hex: "#30D158"))
+                .scaleEffect(appeared ? 1 : 0.4)
+
+            // 胜者名 —— 主视觉，大字加粗，长名自动缩
+            Text(result.winnerName)
+                .font(.system(size: 26, weight: .bold))
+                .foregroundStyle(.white)
+                .lineLimit(1).minimumScaleFactor(0.4)
+                .padding(.horizontal, 4)
+
+            // 获胜 —— 绿色小标签，清晰
+            Text("获胜")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color(hex: "#30D158"))
+                .padding(.horizontal, 11)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(Color(hex: "#30D158").opacity(0.18)))
+
+            // 比分 —— 退居次要
+            Text(result.scoreLine)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.8))
+                .padding(.top, 1)
+
+            Button {
+                match.lastResult = nil
+            } label: {
+                Text("完成")
+                    .font(.system(size: 15, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color(hex: "#30D158"))
+            .padding(.top, 4)
+        }
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black.ignoresSafeArea())
+        .opacity(appeared ? 1 : 0)
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: appeared)
+        .onAppear { appeared = true }
+    }
 }
 
 // MARK: - Color helper

@@ -2692,7 +2692,9 @@ async function syncProfilesToWatch() {
   if (typeof WatchPlugin === 'undefined') return;
   try {
     const names = getKnownWatchNames();
-    await WatchPlugin.syncProfiles({ names });
+    // 同步"个人中心开了心率监测的那个人"的名字，手表本地赛据此决定是否开心率+录音
+    const hrPerson = (profiles || []).find(p => p.hrEnabled);
+    await WatchPlugin.syncProfiles({ names, hrPersonName: hrPerson?.name || '' });
   } catch(e) { /* 手表不在线时静默失败 */ }
 }
 
@@ -3454,6 +3456,51 @@ function normalizeWatchRecord(record) {
   return normalized;
 }
 
+function applyWatchRecordToCurrentMatchState(record) {
+  const normalized = normalizeWatchRecord(record);
+  if (!normalized || !S) return false;
+
+  S.startTime = Number(normalized.matchStartMs || S.startTime || Date.now());
+  S.events = Array.isArray(normalized.events) ? normalized.events : [];
+
+  if (CFG.sport === 'basketball') {
+    const lastEvent = S.events[S.events.length - 1];
+    const finalA = Number(lastEvent?.cumA ?? normalized.setScores?.reduce((sum, sc) => sum + Number(sc?.[0] || 0), 0) ?? 0);
+    const finalB = Number(lastEvent?.cumB ?? normalized.setScores?.reduce((sum, sc) => sum + Number(sc?.[1] || 0), 0) ?? 0);
+    S.score = [finalA, finalB];
+    S.setScores = Array.isArray(normalized.setScores) ? normalized.setScores.map(sc => [Number(sc?.[0] || 0), Number(sc?.[1] || 0)]) : [];
+    S.setTimes = Array.isArray(normalized.setTimes) ? normalized.setTimes.map(Number) : [S.startTime, Date.now()];
+    return true;
+  }
+
+  const incomingSets = Array.isArray(normalized.sets) && normalized.sets.length === 2
+    ? [Number(normalized.sets[0] || 0), Number(normalized.sets[1] || 0)]
+    : null;
+  const incomingSetScores = Array.isArray(normalized.setScores)
+    ? normalized.setScores.map(sc => [Number(sc?.[0] || 0), Number(sc?.[1] || 0)])
+    : [];
+  const derivedSets = incomingSetScores.reduce((acc, [a, b]) => {
+    if (a > b) acc[0]++;
+    else if (b > a) acc[1]++;
+    return acc;
+  }, [0, 0]);
+
+  S.sets = incomingSets || derivedSets;
+  S.setScores = incomingSetScores;
+  S.setTimes = Array.isArray(normalized.setTimes) ? normalized.setTimes.map(Number) : [S.startTime, Date.now()];
+
+  if (CFG.sport === 'tennis') {
+    S.setLog = incomingSetScores;
+    const lastSet = incomingSetScores[incomingSetScores.length - 1] || [0, 0];
+    S.games = [Number(lastSet[0] || 0), Number(lastSet[1] || 0)];
+  } else {
+    const current = incomingSetScores[incomingSetScores.length - 1] || [0, 0];
+    S.pts = [Number(current[0] || 0), Number(current[1] || 0)];
+    S.setNum = Math.max(1, incomingSetScores.length);
+  }
+  return true;
+}
+
 function persistWatchMatchRecord(record) {
   const normalized = normalizeWatchRecord(record);
   if (!normalized) return false;
@@ -3543,19 +3590,25 @@ function initWatchHR() {
     if (!watchFinishedListenerHandle) {
       watchFinishedListenerHandle = WatchPlugin.addListener('watchMatchFinished', data => {
         console.info('[Watch][JS] watchMatchFinished', data);
-        if (persistWatchMatchRecord(data?.record || data)) {
-          console.info('[Watch] saved standalone watch match');
+        const rec = data?.record || data;
+        if (persistWatchMatchRecord(rec)) {
+          console.info('[Watch] saved watch match record');
+        }
+        // 镜像赛：收到手表权威完赛记录后，再用这份最终结果收尾手机 UI。
+        // 不能只依赖 watchStopRequested 时手机本地的 S，因为镜像赛下手机比分可能落后于手表，
+        // 会导致结算浮层显示 0:0 或旧比分。
+        if (currentScreen === 'game' && S && S.winner === null) {
+          S._saved = true;
+          applyWatchRecordToCurrentMatchState(rec);
+          finalizeCurrentMatch(Number.isInteger(rec?.winner) ? rec.winner : 0);
         }
       });
     }
     if (!watchStopRequestedListenerHandle) {
       watchStopRequestedListenerHandle = WatchPlugin.addListener('watchStopRequested', () => {
         console.info('[Watch][JS] watchStopRequested');
-        // 手表已在表上确认过结束，这里不能再走 menuFinish() 弹手机端 confirm，
-        // 否则确认框卡在无人看管的手机上、手表毫无反应。直接静默结束。
-        if (currentScreen === 'game' && S && S.winner === null) {
-          finishMatchNow(true);
-        }
+        // 这里只表示"手表已确认结束"。真正的最终比分/局分以稍后到达的 watchMatchFinished
+        // 权威记录为准；若此处直接用手机本地 S 提前结算，镜像赛下容易因状态滞后显示 0:0。
       });
     }
   } catch(e) {
@@ -3636,6 +3689,7 @@ async function syncWatchMatchState(force = false) {
     canUndo: H.length > 0,
     supportsMultiPoint: CFG.sport === 'basketball',
     elapsedSeconds: Math.max(0, Math.floor(getElapsedMs() / 1000)),
+    matchStartMs: Number(S?.startTime || 0),   // 比赛身份标识：手表用它区分"同一场"还是"新一场"，避免旧高分 max 残留
   };
   const signature = JSON.stringify(payload);
   if (!force && signature === lastWatchStateSignature) return;
@@ -3658,8 +3712,11 @@ async function startWatchWorkout() {
     const sport = CFG.sport || 'badminton';
     const hp = hrProfileForCurrentMatch();
     const playerName = hp?.name || CFG.names[0] || '';
-    console.info('[Watch][JS] startWorkout', { sport, playerName });
-    await WatchPlugin.startWorkout({ sport, playerName });
+    // 只有"个人中心开了心率监测、且名字在本场比赛里"的人在场时，才真正开心率+录音。
+    // 否则手表照常记分（workout 仍开以保后台保活），但不读心率、不录音、不存。
+    const trackWearer = Boolean(hp);
+    console.info('[Watch][JS] startWorkout', { sport, playerName, trackWearer });
+    await WatchPlugin.startWorkout({ sport, playerName, trackWearer });
     await syncWatchMatchState(true);
   } catch(e) {
     console.warn('[Watch] startWorkout failed:', e);
