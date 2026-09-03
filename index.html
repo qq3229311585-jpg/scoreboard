@@ -1727,6 +1727,13 @@ if (APP_PLATFORM === 'android' || APP_PLATFORM === 'ios') {
 // 导航
 // ══════════════════════════════════════════
 const SCREENS = { home:'homeScreen', setup:'setupScreen', game:'gameScreen', history:'historyScreen', detail:'detailScreen', settings:'settingsScreen', profile:'profileScreen', person:'personScreen' };
+
+// Imported/localStorage data is untrusted text. Encode it before inserting it into innerHTML.
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[ch]));
+}
 let currentScreen = 'home';
 // 应用内导航栈（安卓返回键支持，不依赖 browser history）
 const navStack = [];
@@ -2849,7 +2856,7 @@ function renderProfileScreen(){
   list.innerHTML=`<div class="settings-card" style="padding:0;overflow:hidden">`+
     profiles.map((p,i)=>{
       const color=PROFILE_COLORS[i%PROFILE_COLORS.length];
-      const initial=p.name.trim().charAt(0)||'?';
+      const initial=escapeHtml(p.name.trim().charAt(0)||'?');
       const isSelected=profileDeleteSelected.has(p.id);
       const hrTag = p.hrEnabled?`<span class="profile-active-tag" style="background:rgba(255,59,48,.15);color:#FF3B30">❤️ 心率监测</span>`:'';
       if(profileEditMode){
@@ -2859,7 +2866,7 @@ function renderProfileScreen(){
           <div class="profile-del-checkbox${isSelected?' checked':''}">${isSelected?'✓':''}</div>
           <div class="profile-avatar" style="background:${color}">${initial}</div>
           <div class="profile-info" style="flex:1">
-            <div class="profile-name-row"><span>${p.name}</span>${hrTag}</div>
+            <div class="profile-name-row"><span>${escapeHtml(p.name)}</span>${hrTag}</div>
             <div class="profile-sub">心率监测：${p.hrEnabled?'已开启':'未开启'}</div>
           </div>
         </div>`;
@@ -2868,7 +2875,7 @@ function renderProfileScreen(){
         return `<div class="profile-item">
           <div class="profile-avatar" style="background:${color}">${initial}</div>
           <div class="profile-info" style="flex:1;cursor:pointer" onclick="navToPerson(${p.id})">
-            <div class="profile-name-row"><span>${p.name}</span>${hrTag}</div>
+            <div class="profile-name-row"><span>${escapeHtml(p.name)}</span>${hrTag}</div>
             <div class="profile-sub">心率监测：${p.hrEnabled?'已开启':'未开启'} · 点击查看详情</div>
           </div>
           <span style="color:rgba(255,255,255,.25);font-size:18px;pointer-events:none">›</span>
@@ -2884,7 +2891,7 @@ function renderPersonScreen(id){
   const p = profiles.find(x=>x.id===id);
   if(!p){ body.innerHTML=`<div style="padding:40px 16px;text-align:center;color:rgba(255,255,255,.3)">找不到此档案</div>`; return; }
   const color = PROFILE_COLORS[profiles.indexOf(p)%PROFILE_COLORS.length];
-  const initial = p.name.trim().charAt(0)||'?';
+  const initial = escapeHtml(p.name.trim().charAt(0)||'?');
   const isActive = p.id===activeProfileId;
 
   // 统计此人的比赛数
@@ -2897,7 +2904,7 @@ function renderPersonScreen(id){
     <div style="display:flex;align-items:center;gap:16px;padding:20px 20px 16px">
       <div class="profile-avatar" style="width:60px;height:60px;font-size:22px;background:${color}">${initial}</div>
       <div style="flex:1">
-        <div id="personNameDisplay" style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">${p.name}</div>
+        <div id="personNameDisplay" style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">${escapeHtml(p.name)}</div>
         ${p.hrEnabled
           ? `<div style="font-size:12px;color:#FF3B30;font-weight:600">❤️ 心率监测中</div>`
           : `<div style="font-size:12px;color:rgba(255,255,255,.3)">心率监测未开启</div>`
@@ -2908,7 +2915,7 @@ function renderPersonScreen(id){
     <!-- 修改名字 -->
     <div class="settings-card">
       <div class="settings-row" style="gap:10px;flex-wrap:nowrap">
-        <input class="team-input" id="personNameInput" value="${p.name}" maxlength="12"
+        <input class="team-input" id="personNameInput" value="${escapeHtml(p.name)}" maxlength="12"
                placeholder="修改名字" style="flex:1;margin:0"
                onkeydown="if(event.key==='Enter')savePersonName(${p.id})">
         <button class="step-btn" style="width:64px;height:44px;border-radius:12px;font-size:14px;flex-shrink:0"
@@ -3886,7 +3893,10 @@ function switchHistoryTab(tab){
 function loadHistory(){
   // 真实数据
   let real=[];
-  try{real=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(e){}
+  try{
+    const parsed=JSON.parse(localStorage.getItem('sb_history')||'[]');
+    real=Array.isArray(parsed)?parsed.map(normalizeImportedMatch).filter(Boolean):[];
+  }catch(e){}
   if(real.length>0) return {all:real,isDemo:false};
   // 无真实数据时用演示数据
   let demo=[];
@@ -3927,15 +3937,15 @@ function renderHistoryList(){
     const dateStr=`${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
     const cardInner=`<div class="h-card" onclick="openDetail(${r.id})">
         <div class="h-card-top">
-          <span class="h-sport">${SPORT_LABELS[r.sport]||r.sport}</span>
+          <span class="h-sport">${escapeHtml(SPORT_LABELS[r.sport]||r.sport)}</span>
           <span class="h-date">${dateStr}</span>
         </div>
         <div class="h-teams">
-          <span class="h-team ${w===0?'winner':'loser'}">${r.names[0]}</span>
-          <span class="h-vs-score">${scoreInfo.major}</span>
-          <span class="h-team ${w===1?'winner':'loser'}">${r.names[1]}</span>
+          <span class="h-team ${w===0?'winner':'loser'}">${escapeHtml(r.names[0])}</span>
+          <span class="h-vs-score">${escapeHtml(scoreInfo.major)}</span>
+          <span class="h-team ${w===1?'winner':'loser'}">${escapeHtml(r.names[1])}</span>
         </div>
-        ${scoreInfo.detail?`<div class="h-set-line">${scoreInfo.detail}</div>`:''}
+        ${scoreInfo.detail?`<div class="h-set-line">${escapeHtml(scoreInfo.detail)}</div>`:''}
         <div class="h-duration">${dur}${r.swingCount?` · 🏸 ${r.swingCount}拍`:''}</div>
       </div>`;
     return cardInner;
@@ -3967,21 +3977,21 @@ function buildMatchupView(all){
       return `<div class="matchup-row">
         <span class="matchup-row-date">${ds}</span>
         <span class="matchup-row-score">${sc}</span>
-        <span class="matchup-row-winner" style="color:${wcolor}">${wname}胜</span>
+        <span class="matchup-row-winner" style="color:${wcolor}">${escapeHtml(wname)}胜</span>
       </div>`;
     }).join('');
     return `<div class="matchup-card matchup-card-click" onclick="openMatchupDetail('${encodeURIComponent(key)}')">
       <div class="matchup-head">
-        <span class="matchup-name">${n0}</span>
+        <span class="matchup-name">${escapeHtml(n0)}</span>
         <span class="matchup-vs">VS</span>
-        <span class="matchup-name" style="text-align:right">${n1}</span>
+        <span class="matchup-name" style="text-align:right">${escapeHtml(n1)}</span>
       </div>
       <div class="matchup-record">
         <span class="matchup-wins-a">${wins[n0]}胜</span>
         <span class="matchup-total">${n}场 · ${fmtDuration(avgDur)}</span>
         <span class="matchup-wins-b">${wins[n1]}胜</span>
       </div>
-      <div class="matchup-meta">${sportStr}</div>
+      <div class="matchup-meta">${escapeHtml(sportStr)}</div>
       <div class="matchup-log">${recentRows}</div>
       <div class="matchup-open-hint">查看这组对阵的全部 ${n} 场</div>
     </div>`;
@@ -4002,6 +4012,7 @@ function deleteHistory(id){
 function openDetail(id){
   let all=[];
   try{all=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(e){}
+  all=Array.isArray(all)?all.map(normalizeImportedMatch).filter(Boolean):[];
   let r=all.find(x=>x.id===id);
   if(!r){
     // 演示数据
@@ -4027,6 +4038,7 @@ function toggleDetailCollapse(id){
 function openMatchupDetail(encodedKey){
   let all=[];
   try{all=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(e){}
+  all=Array.isArray(all)?all.map(normalizeImportedMatch).filter(Boolean):[];
   const key=decodeURIComponent(encodedKey);
   const data=getMatchupData(all,key);
   if(!data) return;
@@ -4047,8 +4059,8 @@ function renderDetail(r){
 
   // 头部
   html+=`<div class="d-header">
-    <div class="d-names">${names[0]}<span class="d-vs">vs</span>${names[1]}</div>
-    <div class="d-result">${SPORT_LABELS[r.sport]} · ${dateStr} · ${fmtDuration(r.duration)}</div>
+    <div class="d-names">${escapeHtml(names[0])}<span class="d-vs">vs</span>${escapeHtml(names[1])}</div>
+    <div class="d-result">${escapeHtml(SPORT_LABELS[r.sport]||r.sport)} · ${dateStr} · ${fmtDuration(r.duration)}</div>
   </div>`;
 
   // 全场走势图
@@ -4058,8 +4070,8 @@ function renderDetail(r){
       <div class="d-section-title" style="display:flex;align-items:center;justify-content:space-between">
         全场走势
         <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,.35)">
-          <span style="display:inline-block;width:10px;height:3px;background:var(--line-a,var(--clr-a,#D95F4B));vertical-align:middle;border-radius:2px;margin-right:3px"></span>${names[0]}
-          <span style="display:inline-block;width:10px;height:3px;background:var(--line-b,var(--clr-b,#4A7FA8));vertical-align:middle;border-radius:2px;margin:0 3px 0 10px"></span>${names[1]}
+          <span style="display:inline-block;width:10px;height:3px;background:var(--line-a,var(--clr-a,#D95F4B));vertical-align:middle;border-radius:2px;margin-right:3px"></span>${escapeHtml(names[0])}
+          <span style="display:inline-block;width:10px;height:3px;background:var(--line-b,var(--clr-b,#4A7FA8));vertical-align:middle;border-radius:2px;margin:0 3px 0 10px"></span>${escapeHtml(names[1])}
         </span>
       </div>
       <div class="d-card" style="padding:8px 8px 4px">${progChart}</div>
@@ -4089,7 +4101,7 @@ function renderDetail(r){
     html+=`<div class="d-section"><div class="d-section-title">连续得分</div><div class="d-card">`;
     streaks.forEach(s=>{
       html+=`<div class="streak-item">
-        <span class="streak-who">${s.name}</span>
+        <span class="streak-who">${escapeHtml(s.name)}</span>
         <span class="streak-meta">
           <span class="streak-count">连得 ${s.count} 分</span>
           <span class="streak-time">${s.timeLabel}</span>
@@ -4184,20 +4196,20 @@ function renderMatchupDetail(data){
   const body=document.getElementById('detailBody');
   const [n0,n1]=data.pairNames;
   let html=`<div class="d-header">
-    <div class="d-names">${n0}<span class="d-vs">vs</span>${n1}</div>
-    <div class="d-result">${data.matches.length} 场交手 · 场均 ${fmtDuration(data.avgDur)} · ${data.sportStr}</div>
+    <div class="d-names">${escapeHtml(n0)}<span class="d-vs">vs</span>${escapeHtml(n1)}</div>
+    <div class="d-result">${data.matches.length} 场交手 · 场均 ${fmtDuration(data.avgDur)} · ${escapeHtml(data.sportStr)}</div>
   </div>`;
 
   html+=`<div class="d-section">
     <div class="d-section-title">对阵汇总</div>
     <div class="d-card">
       <div class="set-row">
-        <span class="set-label">${n0}</span>
+        <span class="set-label">${escapeHtml(n0)}</span>
         <span class="set-score" style="color:var(--line-a,#E07060)">${data.wins[n0]} 胜</span>
         <span class="set-time">总胜场</span>
       </div>
       <div class="set-row">
-        <span class="set-label">${n1}</span>
+        <span class="set-label">${escapeHtml(n1)}</span>
         <span class="set-score" style="color:var(--line-b,#6090B8)">${data.wins[n1]} 胜</span>
         <span class="set-time">总胜场</span>
       </div>
@@ -4213,15 +4225,15 @@ function renderMatchupDetail(data){
     const scoreInfo=getMatchDisplayScores(r);
     return `<div class="matchup-detail-card" onclick="openDetail(${r.id})">
       <div class="matchup-detail-top">
-        <span class="matchup-detail-sport">${SPORT_LABELS[r.sport]||r.sport}</span>
+        <span class="matchup-detail-sport">${escapeHtml(SPORT_LABELS[r.sport]||r.sport)}</span>
         <span class="matchup-detail-date">${ds}</span>
       </div>
       <div class="h-teams" style="margin-bottom:8px">
-        <span class="h-team ${r.winner===0?'winner':'loser'}">${r.names[0]}</span>
-        <span class="matchup-detail-major">${scoreInfo.major}</span>
-        <span class="h-team ${r.winner===1?'winner':'loser'}">${r.names[1]}</span>
+        <span class="h-team ${r.winner===0?'winner':'loser'}">${escapeHtml(r.names[0])}</span>
+        <span class="matchup-detail-major">${escapeHtml(scoreInfo.major)}</span>
+        <span class="h-team ${r.winner===1?'winner':'loser'}">${escapeHtml(r.names[1])}</span>
       </div>
-      ${scoreInfo.detail?`<div class="matchup-detail-minor">${scoreInfo.detail}</div>`:''}
+      ${scoreInfo.detail?`<div class="matchup-detail-minor">${escapeHtml(scoreInfo.detail)}</div>`:''}
       <div class="h-duration" style="margin-top:10px">${fmtDuration(r.duration)}</div>
     </div>`;
   }).join('');
@@ -4265,7 +4277,7 @@ function buildInsightSummary(r, names) {
   const evs = r.events || [];
   if (evs.length < 5) return '';
   const w = r.winner;
-  const wName = w != null ? names[w] : null;
+  const wName = w != null ? escapeHtml(names[w]) : null;
 
   // ── 领先权统计 ──
   let leadChanges = 0, prevLdr = -1;
@@ -4311,7 +4323,7 @@ function buildInsightSummary(r, names) {
     const atScore = best.startIdx > 0
       ? `${evs[best.startIdx - 1].cumA}:${evs[best.startIdx - 1].cumB}`
       : '0:0';
-    s2 = `${names[best.p]} 最大连续拿下 ${best.cnt} 分（比分 ${atScore} 时启动），是全场最关键的一波。`;
+    s2 = `${escapeHtml(names[best.p])} 最大连续拿下 ${best.cnt} 分（比分 ${atScore} 时启动），是全场最关键的一波。`;
   } else if (leadChanges > 0) {
     for (let i = 1; i < evs.length; i++) {
       const pl = evs[i-1].cumA > evs[i-1].cumB ? 0 : evs[i-1].cumA < evs[i-1].cumB ? 1 : -1;
@@ -4379,7 +4391,7 @@ function buildInsightSummary(r, names) {
         </div>`;
       }
       const refNote=M.restingHR?`最大 ${M.maxHR} · 静息 ${M.restingHR}`:`最大 ${M.maxHR}`;
-      const calHtml=r.calories?` <span class="insight-hr-stat">消耗 <b>${r.calories}</b> kcal</span>`:'';
+      const calHtml=r.calories?` <span class="insight-hr-stat">消耗 <b>${escapeHtml(r.calories)}</b> kcal</span>`:'';
       hrHtml=`<div class="insight-hr-row">
         <span class="insight-hr-badge">${zoneNames[avgZone-1]}</span>
         <span class="insight-hr-stat">平均 <b>${avgBpm}</b></span>
@@ -4436,7 +4448,7 @@ function buildSetHRChart(points, playerName) {
 
   return `<div style="padding:6px 8px 4px">
     <div style="font-size:10px;font-weight:600;color:rgba(255,100,100,.8);margin-bottom:3px;letter-spacing:.3px">
-      ♥ ${playerName} 心率 &nbsp;·&nbsp; 均 ${avgBpm} bpm &nbsp;·&nbsp; 峰 ${Math.max(...bpms)} bpm
+      ♥ ${escapeHtml(playerName)} 心率 &nbsp;·&nbsp; 均 ${avgBpm} bpm &nbsp;·&nbsp; 峰 ${Math.max(...bpms)} bpm
     </div>
     <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:auto;display:block">
       <defs>
@@ -4602,7 +4614,7 @@ function buildLogFromEvents(evs,names){
     const color=run.p===0?'var(--line-a,#E07060)':'var(--line-b,#6090B8)';
     const pointTime=fmtPointTime(run.pointMs);
     return `<div class="log-run">
-      <span class="log-who" style="color:${color}">${names[run.p]}</span>
+      <span class="log-who" style="color:${color}">${escapeHtml(names[run.p])}</span>
       <span class="log-pts">${pts}</span>
       <span class="log-meta">
         <span class="log-point-time">${pointTime}</span>
@@ -4656,7 +4668,7 @@ function buildHistorySummary(all){
       <div><div class="h-stat-val">${total}</div><div class="h-stat-lbl">场次</div></div>
       <div><div class="h-stat-val">${avgDur?fmtDuration(avgDur):'—'}</div><div class="h-stat-lbl">场均时长</div></div>
       <div><div class="h-stat-val">${totalPts}</div><div class="h-stat-lbl">总记录分次</div></div>
-      <div><div class="h-stat-val">${topSport?(SPORT_LABELS[topSport[0]]||topSport[0]):'—'}</div><div class="h-stat-lbl">最多运动</div></div>
+      <div><div class="h-stat-val">${topSport?escapeHtml(SPORT_LABELS[topSport[0]]||topSport[0]):'—'}</div><div class="h-stat-lbl">最多运动</div></div>
     </div>
     ${longestDur>60000?`<div class="h-summary-note">最长一场 ${fmtDuration(longestDur)}</div>`:''}
   </div>`;
@@ -4718,7 +4730,7 @@ function buildOverview(all){
   const sportBars=sportRank.map(([s,n])=>{
     const pct=Math.round(n/total*100);
     return `<div class="ov-row">
-      <span class="ov-row-lbl">${SPORT_LABELS[s]||s}</span>
+      <span class="ov-row-lbl">${escapeHtml(SPORT_LABELS[s]||s)}</span>
       <div class="ov-bar-outer"><div class="ov-bar-inner" style="width:${pct}%"></div></div>
       <span class="ov-row-val">${n}场</span>
     </div>`;
@@ -4728,7 +4740,7 @@ function buildOverview(all){
   const playerRows=playerRank.slice(0,5).map(([name,n],i)=>`
     <div class="ov-row">
       <span class="ov-row-rank">${i+1}</span>
-      <span class="ov-row-lbl" style="flex:1">${name}</span>
+      <span class="ov-row-lbl" style="flex:1">${escapeHtml(name)}</span>
       <span class="ov-row-val">${n}场</span>
     </div>`).join('');
 
@@ -4739,7 +4751,7 @@ function buildOverview(all){
     <div class="ov-section-title">出场次数</div>
     <div class="ov-card">${playerRows}</div>
     ${topPair&&topPair[1]>1?`<div class="ov-section-title">最常对阵</div>
-    <div class="ov-card"><div class="ov-pair">${topPair[0]}<span class="ov-pair-count">${topPair[1]}场</span></div></div>`:''}
+    <div class="ov-card"><div class="ov-pair">${escapeHtml(topPair[0])}<span class="ov-pair-count">${topPair[1]}场</span></div></div>`:''}
     <button class="ov-export-btn" onclick="exportHistory()">导出全部数据</button>
   `;
 }
@@ -4922,8 +4934,8 @@ function buildCriticalSection(r,names){
   }).join('');
   const notes=[];
   if(leadChanges>0)notes.push(`领先权交换 ${leadChanges} 次`);
-  if(maxDeficit>0&&r.winner!=null)notes.push(`${names[r.winner]} 曾落后 ${maxDeficit} 分后逆转`);
-  else if(maxDeficit===0&&r.winner!=null)notes.push(`${names[r.winner]} 全程保持领先`);
+  if(maxDeficit>0&&r.winner!=null)notes.push(`${escapeHtml(names[r.winner])} 曾落后 ${maxDeficit} 分后逆转`);
+  else if(maxDeficit===0&&r.winner!=null)notes.push(`${escapeHtml(names[r.winner])} 全程保持领先`);
   return `<div class="d-section"><div class="d-section-title">关键球</div><div class="d-card" style="padding:10px 16px">
     ${rows}
     ${notes.length?`<div class="crit-summary">${notes.join('　')}</div>`:''}
@@ -5370,6 +5382,66 @@ function exportHistory(){
 // ══════════════════════════════════════════
 // 导入数据（Mac/桌面端）
 // ══════════════════════════════════════════
+function normalizeImportedMatch(record){
+  if(!record || typeof record!=='object') return null;
+  const toFiniteNumber=(value,fallback=0)=>{
+    const number=Number(value);
+    return Number.isFinite(number)?number:fallback;
+  };
+  const normalizeScorePairs=value=>Array.isArray(value)
+    ? value.map(pair=>Array.isArray(pair)&&pair.length>=2
+      ? [toFiniteNumber(pair[0]),toFiniteNumber(pair[1])] : null).filter(Boolean)
+    : [];
+  const id=Number(record.id);
+  if(!Number.isSafeInteger(id) || id<=0) return null;
+  const names=Array.isArray(record.names)
+    ? record.names.slice(0,2).map(name=>typeof name==='string'?name.slice(0,64):'')
+    : [];
+  if(names.length<2 || names.some(name=>!name)) return null;
+  const date=Number(record.date);
+  const sport=typeof record.sport==='string' && Object.prototype.hasOwnProperty.call(SPORT_LABELS,record.sport)
+    ? record.sport : 'badminton';
+  const rawRules=record.rules&&typeof record.rules==='object'?record.rules:{};
+  const rules={...rawRules,
+    ptWin:toFiniteNumber(rawRules.ptWin),
+    setWin:toFiniteNumber(rawRules.setWin),
+    totalSets:toFiniteNumber(rawRules.totalSets)};
+  const events=Array.isArray(record.events)?record.events.map(event=>{
+    if(!event||typeof event!=='object') return null;
+    const p=Number(event.p);
+    if(p!==0&&p!==1) return null;
+    return {...event,
+      p,
+      delta:Math.max(1,toFiniteNumber(event.delta,1)),
+      setIndex:Math.max(1,Math.floor(toFiniteNumber(event.setIndex,1))),
+      t:toFiniteNumber(event.t),
+      elapsedMs:Math.max(0,toFiniteNumber(event.elapsedMs)),
+      pointMs:Math.max(0,toFiniteNumber(event.pointMs)),
+      cumA:toFiniteNumber(event.cumA),
+      cumB:toFiniteNumber(event.cumB),
+    };
+  }).filter(Boolean):[];
+  const heartRateTimeline=Array.isArray(record.heartRateTimeline)
+    ? record.heartRateTimeline.map(sample=>{
+      if(!sample||typeof sample!=='object') return null;
+      return {...sample,timestamp:toFiniteNumber(sample.timestamp),bpm:toFiniteNumber(sample.bpm)};
+    }).filter(Boolean):[];
+  const sets=Array.isArray(record.sets)
+    ? (Array.isArray(record.sets[0])?normalizeScorePairs(record.sets):record.sets.slice(0,2).map(value=>toFiniteNumber(value)))
+    : [];
+  return {...record,
+    id,names,sport,date:Number.isFinite(date)?date:Date.now(),
+    rules,events,sets,setScores:normalizeScorePairs(record.setScores),
+    setTimes:Array.isArray(record.setTimes)?record.setTimes.map(value=>toFiniteNumber(value)):[],
+    winner:Number.isInteger(record.winner)&&[0,1].includes(record.winner)?record.winner:null,
+    duration:Math.max(0,toFiniteNumber(record.duration)),
+    heartRateTimeline,
+    hrPlayerIdx:Number.isInteger(record.hrPlayerIdx)&&[0,1].includes(record.hrPlayerIdx)?record.hrPlayerIdx:0,
+    swingCount:Math.max(0,toFiniteNumber(record.swingCount)),
+    calories:record.calories==null?undefined:Math.max(0,toFiniteNumber(record.calories)),
+  };
+}
+
 function importHistory(event){
   const file=event.target.files[0];
   if(!file)return;
@@ -5409,7 +5481,7 @@ function importHistory(event){
       let existing=[];
       try{existing=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(_){}
       const existingIds=new Set(existing.map(r=>r.id));
-      const toAdd=incoming.filter(r=>r.id&&!existingIds.has(r.id));
+      const toAdd=incoming.map(normalizeImportedMatch).filter(r=>r&&!existingIds.has(r.id));
       if(!toAdd.length){alert('没有发现新记录（可能已全部导入过）');return;}
       const merged=[...toAdd,...existing].sort((a,b)=>b.date-a.date).slice(0,300);
       localStorage.setItem('sb_history',JSON.stringify(merged));

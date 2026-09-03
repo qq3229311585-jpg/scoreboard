@@ -18,11 +18,14 @@ final class TrainerWorkout: NSObject, ObservableObject {
     /// 在 session 进入 .running（true）或启动失败（false）时回调一次。
     private var onReady: ((Bool) -> Void)?
     private var readyFired = false
+    /// stop() 后为 true——授权回调若晚于 stop 到达，不再启动 session（否则会泄漏一个后台 workout）
+    private var stopped = false
 
     /// 请求授权并启动运动会话。onReady 在主线程回调：true=已 running 可采集，false=失败（仅 100Hz）。
     func start(onReady: @escaping (Bool) -> Void) {
         self.onReady = onReady
         readyFired = false
+        stopped = false
         guard HKHealthStore.isHealthDataAvailable() else {
             print("[TrainerWorkout] HealthKit 不可用")
             fireReady(false); return
@@ -43,6 +46,7 @@ final class TrainerWorkout: NSObject, ObservableObject {
     }
 
     private func beginSession() {
+        guard !stopped else { return }
         let config = HKWorkoutConfiguration()
         config.activityType = .badminton
         config.locationType = .indoor
@@ -64,6 +68,7 @@ final class TrainerWorkout: NSObject, ObservableObject {
     }
 
     func stop() {
+        stopped = true
         isActive = false
         guard let session else { return }
         session.end()

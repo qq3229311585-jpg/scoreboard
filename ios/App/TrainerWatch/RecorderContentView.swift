@@ -52,7 +52,7 @@ struct StartView: View {
                 Text(strokeType.rawValue)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(.white)
-                Text("50Hz 原始录制")
+                Text("800Hz 原始录制")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -81,6 +81,42 @@ struct RecordingView: View {
     @State private var pulse = false
 
     var body: some View {
+        if session.isPreparing {
+            preparingBody
+        } else {
+            recordingBody
+        }
+    }
+
+    /// 准备中：传感器还没出数据，别让用户以为已经在录
+    private var preparingBody: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            ProgressView()
+                .controlSize(.large)
+            Text("准备传感器…")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.secondary)
+                .padding(.top, 10)
+            Text("开始后手腕会震动一下")
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+                .padding(.top, 2)
+            Spacer()
+            Button { session.cancelPreparing() } label: {
+                Text("取消")
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 9)
+            }
+            .buttonStyle(.bordered)
+            .tint(.secondary)
+            .padding(.horizontal, 4)
+            .padding(.bottom, 4)
+        }
+    }
+
+    private var recordingBody: some View {
         VStack(spacing: 0) {
             Spacer()
 
@@ -100,6 +136,8 @@ struct RecordingView: View {
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.secondary)
                 .padding(.top, 10)
+
+            AccelStreamWarning(recorder: session.recorder)
 
             Spacer()
 
@@ -124,6 +162,28 @@ struct RecordingView: View {
             }
             .padding(.horizontal, 4)
             .padding(.bottom, 4)
+        }
+    }
+}
+
+/// 800Hz 高频流未激活时的小警示。单独成 View 以直接观察 recorder
+/// （嵌套 ObservableObject 的变化不会通过 session 触发父视图刷新）。
+private struct AccelStreamWarning: View {
+    @ObservedObject var recorder: StreamRecorder
+    @State private var graceOver = false   // 首批数据到达前给 2 秒宽限，避免开始时警示闪烁
+
+    var body: some View {
+        Group {
+            if graceOver && !recorder.accelStreamActive {
+                Text("高频未激活 · 仅100Hz")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.orange)
+                    .padding(.top, 4)
+            }
+        }
+        .task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            graceOver = true
         }
     }
 }
@@ -201,7 +261,7 @@ struct SummaryView: View {
                 // 同步按钮区
                 sendSection
 
-                // 其他操作
+                // 其他操作（写文件期间禁用，避免清空正在写入的数据）
                 VStack(spacing: 6) {
                     Button {
                         onRetry?()
@@ -210,6 +270,7 @@ struct SummaryView: View {
                         Text("再来一组").frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
                     .buttonStyle(.bordered)
+                    .disabled(session.sendState == .transferring)
 
                     Button {
                         session.phase = .setup
@@ -219,6 +280,7 @@ struct SummaryView: View {
                     }
                     .buttonStyle(.bordered)
                     .tint(.secondary)
+                    .disabled(session.sendState == .transferring)
                 }
             }
             .padding(.horizontal, 4)

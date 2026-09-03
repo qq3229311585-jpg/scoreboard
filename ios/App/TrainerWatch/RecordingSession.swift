@@ -1,5 +1,6 @@
 import Foundation
 import WatchConnectivity
+import WatchKit
 
 enum StrokeType: String, CaseIterable, Identifiable, Hashable {
     case smash = "杀球"
@@ -40,6 +41,8 @@ final class RecordingSession: NSObject, ObservableObject, WCSessionDelegate {
     private let workout = TrainerWorkout()
     private var timer: Timer?
     private var sessionStart: Date?
+    /// 当前这组数据对应的传输文件名——迟到的上一组传输失败回调不污染本组状态
+    private var activeTransferName: String?
 
     override init() {
         super.init()
@@ -50,20 +53,31 @@ final class RecordingSession: NSObject, ObservableObject, WCSessionDelegate {
     }
 
     private var recorderStarted = false
+    /// 准备中：界面已切到录制页，但传感器还没真正开始出数据
+    @Published var isPreparing = false
 
     func startRecording() {
         sendState = .idle
         sendError = nil
-        sessionStart = Date()
+        activeTransferName = nil
         elapsedSeconds = 0
         phase = .recording
+        isPreparing = true
         recorderStarted = false
-        startTimer()
         // 启动运动会话——CMBatchedSensorManager 的 800Hz 要求 session 真正进入 .running。
         // 必须等 .running 再开采集，否则高频流抢跑被拒、丢数据。授权/启动失败也照常录（仅 100Hz）。
         workout.start { [weak self] ok in
-            print("[Recorder] workout ready=\(ok)，开始采集")
-            self?.beginRecorderOnce()
+            guard let self else { return }
+            if self.recorderStarted {
+                // 兜底已先启动（此时 800Hz 被拒只有 100Hz），workout 迟到 ready 后补启高频流
+                if ok, self.phase == .recording {
+                    print("[Recorder] workout 迟到 ready，补启 800Hz 流")
+                    self.recorder.ensureAccelStream()
+                }
+            } else {
+                print("[Recorder] workout ready=\(ok)，开始采集")
+                self.beginRecorderOnce()
+            }
         }
         // 兜底：2.5s 内若 workout 仍未 ready（异常情况），也启动采集，至少拿到 100Hz。
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
@@ -76,10 +90,23 @@ final class RecordingSession: NSObject, ObservableObject, WCSessionDelegate {
     private func beginRecorderOnce() {
         guard !recorderStarted, phase == .recording else { return }
         recorderStarted = true
+        sessionStart = Date()          // t=0 与 startEpochMs 对齐到真实采集开始时刻
         recorder.start()
+        isPreparing = false
+        startTimer()                   // 计时从真实采集开始，不含准备时间
+        WKInterfaceDevice.current().play(.start)
+    }
+
+    /// 准备阶段取消，直接回首页（此时还没有任何数据）
+    func cancelPreparing() {
+        guard isPreparing else { return }
+        workout.stop()
+        isPreparing = false
+        phase = .setup
     }
 
     func pauseRecording() {
+        guard recorderStarted else { return }   // 准备中不可暂停（UI 也不显示按钮）
         recorder.pause()
         timer?.invalidate(); timer = nil
         phase = .paused
@@ -96,6 +123,7 @@ final class RecordingSession: NSObject, ObservableObject, WCSessionDelegate {
         workout.stop()
         timer?.invalidate(); timer = nil
         phase = .done
+        WKInterfaceDevice.current().play(.stop)
     }
 
     private func startTimer() {
@@ -110,10 +138,12 @@ final class RecordingSession: NSObject, ObservableObject, WCSessionDelegate {
         sendState = .transferring
         let startMs = (sessionStart ?? Date()).timeIntervalSince1970 * 1000
         let stroke  = strokeType.rawValue
+        // 主线程取快照：录制已停止，之后哪怕"再来一组"清空数组也不影响写文件
+        let snap = recorder.snapshot()
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
-            guard let fileURL = self.recorder.writeToTempFile(strokeType: stroke, startEpochMs: startMs) else {
+            guard let fileURL = self.recorder.writeToTempFile(snap, strokeType: stroke, startEpochMs: startMs) else {
                 DispatchQueue.main.async { self.sendState = .error; self.sendError = "写入失败" }
                 return
             }
@@ -121,13 +151,17 @@ final class RecordingSession: NSObject, ObservableObject, WCSessionDelegate {
                 "action":      "imuStream",
                 "strokeType":  stroke,
                 "startMs":     startMs,
-                "accelCount":  self.recorder.accelCount,
-                "motionCount": self.recorder.motionCount,
+                "accelCount":  snap.accel.count / 4,
+                "motionCount": snap.motion.count / 13,
                 "accelHz":     800,
                 "motionHz":    100
             ]
             WCSession.default.transferFile(fileURL, metadata: meta)
-            DispatchQueue.main.async { self.sendState = .done }
+            DispatchQueue.main.async {
+                self.activeTransferName = fileURL.lastPathComponent
+                self.sendState = .done
+                WKInterfaceDevice.current().play(.success)
+            }
         }
     }
 
@@ -135,11 +169,19 @@ final class RecordingSession: NSObject, ObservableObject, WCSessionDelegate {
     func session(_ session: WCSession, activationDidCompleteWith state: WCSessionActivationState, error: Error?) {}
 
     func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer, error: Error?) {
-        guard let error else { return }
+        let name = fileTransfer.file.fileURL.lastPathComponent
+        guard let error else {
+            // 传输成功，清掉 tmp 里的大文件，避免积累
+            try? FileManager.default.removeItem(at: fileTransfer.file.fileURL)
+            return
+        }
+        print("[Recorder] transfer error (\(name)): \(error)")
         DispatchQueue.main.async {
+            // 只有还停留在这组数据的 Summary 页时才提示重试；
+            // 已开始新一组的话，重试发出的会是新数据，反而造成混乱
+            guard self.phase == .done, name == self.activeTransferName else { return }
             self.sendState = .error
             self.sendError = "传输出错，可重试"
-            print("[Recorder] transfer error: \(error)")
         }
     }
 }
