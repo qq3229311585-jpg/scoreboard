@@ -357,6 +357,64 @@
     .profile-del-checkbox { width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,.25); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; transition:all .15s; }
     .profile-del-checkbox.checked { background:rgba(255,59,48,.85); border-color:rgba(255,59,48,.85); color:#fff; }
     .profile-item.pf-del-selected { background:rgba(255,59,48,.07); }
+    .profile-avatar.lg { width:46px; height:46px; font-size:19px; box-shadow:0 4px 14px rgba(0,0,0,.25); }
+    .profile-chevron { color:rgba(255,255,255,.25); font-size:20px; pointer-events:none; }
+    .profile-stats { display:flex; gap:10px; margin-top:4px; font-size:12px; color:rgba(255,255,255,.4); font-variant-numeric:tabular-nums; }
+    .profile-stats b { color:rgba(255,255,255,.8); font-weight:700; }
+    .pc-bar { gap:12px; }
+    .pc-bar-title { font-size:22px; font-weight:800; color:#fff; letter-spacing:-.3px; flex:1; }
+    html[data-platform="desktop"] .pc-bar-title { flex:none; }
+    .pc-section-title { font-size:12px; font-weight:600; color:rgba(255,255,255,.38); letter-spacing:.8px; padding:14px 4px 7px; }
+    .pc-empty { padding:26px 16px; text-align:center; color:rgba(255,255,255,.35); font-size:14px; line-height:1.6; }
+    /* 手表连接卡 */
+    .watch-hub { position:relative; overflow:hidden; border-radius:18px; padding:16px; background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.03)); }
+    .watch-hub::after { content:''; position:absolute; right:-30px; top:-30px; width:120px; height:120px; border-radius:50%; background:var(--hub-glow,rgba(255,255,255,.06)); filter:blur(8px); pointer-events:none; }
+    .watch-hub-top { display:flex; align-items:center; gap:12px; }
+    .watch-hub-ico { width:44px; height:44px; border-radius:13px; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+    .watch-hub-title { font-size:16px; font-weight:700; color:#fff; }
+    .watch-hub-state { display:flex; align-items:center; gap:6px; margin-top:3px; font-size:12px; color:rgba(255,255,255,.55); }
+    .watch-dot { width:7px; height:7px; border-radius:50%; background:var(--dot,#8E8E93); box-shadow:0 0 0 3px color-mix(in srgb,var(--dot,#8E8E93) 25%,transparent); flex-shrink:0; }
+    .watch-hub-refresh { margin-left:auto; border:none; background:rgba(255,255,255,.1); color:rgba(255,255,255,.7); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; }
+    .watch-hub-refresh:active { opacity:.6; }
+    .watch-hub-rows { margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .watch-hub-cell { background:rgba(0,0,0,.18); border-radius:12px; padding:10px 12px; min-width:0; }
+    .watch-hub-lbl { font-size:11px; color:rgba(255,255,255,.4); }
+    .watch-hub-val { font-size:14px; font-weight:700; color:#fff; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .watch-hub-tip { margin-top:10px; font-size:12px; line-height:1.55; color:rgba(255,255,255,.45); }
+    /* 添加使用者 */
+    .pc-add { display:flex; align-items:center; gap:10px; padding:8px 8px 8px 16px; background:rgba(255,255,255,.05); border-radius:14px; border:1px dashed rgba(255,255,255,.14); }
+    .pc-add .team-input { text-align:left; font-weight:500; }
+    .pc-add-btn { border:none; width:40px; height:40px; border-radius:12px; background:var(--accent); color:var(--accent-text); font-size:22px; font-weight:600; cursor:pointer; flex-shrink:0; }
+    .pc-add-btn:active { opacity:.7; }
+    /* 使用说明 */
+    .pc-steps { display:flex; flex-direction:column; gap:10px; padding:14px 16px; }
+    .pc-step { display:flex; gap:12px; align-items:flex-start; font-size:13px; line-height:1.5; color:rgba(255,255,255,.6); }
+    .pc-step-no { width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.1); color:rgba(255,255,255,.75); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+    /* 个人页 */
+    .person-hero { display:flex; flex-direction:column; align-items:center; text-align:center; padding:10px 16px 6px; }
+    .person-avatar { width:78px; height:78px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:800; color:#fff; box-shadow:0 0 0 4px var(--bg),0 0 0 6px var(--ring,rgba(255,255,255,.2)),0 10px 30px rgba(0,0,0,.35); }
+    .person-name { font-size:24px; font-weight:800; color:#fff; margin-top:14px; letter-spacing:-.3px; }
+    .person-chips { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:8px; }
+    .person-chip { font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,.08); color:rgba(255,255,255,.55); }
+    .person-chip.hr { background:rgba(255,59,48,.16); color:#FF6B61; }
+    .person-chip.self { background:rgba(52,199,89,.16); color:#4CD964; }
+    .person-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px; }
+    .person-stat { background:rgba(255,255,255,.06); border-radius:14px; padding:12px 6px; text-align:center; }
+    .person-stat-val { font-size:20px; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+    .person-stat-lbl { font-size:11px; color:rgba(255,255,255,.38); margin-top:3px; }
+    .pc-num-input { width:72px; flex:none !important; text-align:center !important; background:rgba(255,255,255,.07) !important; border-radius:10px; padding:7px 4px; }
+    .person-recent { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.06); cursor:pointer; }
+    .person-recent:last-child { border-bottom:none; }
+    .person-recent:active { background:rgba(255,255,255,.04); }
+    .person-result { width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0; }
+    .person-result.w { background:rgba(52,199,89,.18); color:#4CD964; }
+    .person-result.l { background:rgba(255,255,255,.08); color:rgba(255,255,255,.45); }
+    .person-recent-main { flex:1; min-width:0; }
+    .person-recent-title { font-size:14px; font-weight:600; color:rgba(255,255,255,.88); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .person-recent-sub { font-size:12px; color:rgba(255,255,255,.38); margin-top:2px; }
+    .person-recent-score { font-size:15px; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; flex-shrink:0; }
+    .person-danger { width:100%; border:none; border-radius:14px; padding:14px; margin-top:8px; background:rgba(255,59,48,.12); color:#FF6B61; font-size:15px; font-weight:700; cursor:pointer; }
+    .person-danger:active { background:rgba(255,59,48,.2); }
     #setupControls {
       flex: 1; background: var(--bg); overflow-y: auto;
       padding: 8px 18px 28px; display: flex; flex-direction: column; gap: 11px;
@@ -772,6 +830,7 @@
       touch-action: pan-y;
     }
     .settings-scroll::-webkit-scrollbar { display: none; }
+    .settings-scroll > * { flex-shrink: 0; }
 
     html[data-platform="desktop"] .screen {
       padding: 0;
@@ -1353,6 +1412,39 @@
     html[data-colormode="light"] .menu-item { color:#1c1c1e; border-bottom-color:rgba(0,0,0,.08); }
     html[data-colormode="light"] .menu-item.danger { color:#FF3B30; }
     html[data-colormode="light"] .menu-item:active { background:rgba(0,0,0,.06); }
+    /* 个人中心 */
+    html[data-colormode="light"] .pc-bar-title,
+    html[data-colormode="light"] .profile-name-row,
+    html[data-colormode="light"] .watch-hub-title,
+    html[data-colormode="light"] .watch-hub-val,
+    html[data-colormode="light"] .person-name,
+    html[data-colormode="light"] .person-stat-val,
+    html[data-colormode="light"] .person-recent-title,
+    html[data-colormode="light"] .person-recent-score { color:#1c1c1e; }
+    html[data-colormode="light"] .profile-sub,
+    html[data-colormode="light"] .profile-stats,
+    html[data-colormode="light"] .pc-section-title,
+    html[data-colormode="light"] .pc-empty,
+    html[data-colormode="light"] .watch-hub-state,
+    html[data-colormode="light"] .watch-hub-lbl,
+    html[data-colormode="light"] .watch-hub-tip,
+    html[data-colormode="light"] .pc-step,
+    html[data-colormode="light"] .person-stat-lbl,
+    html[data-colormode="light"] .person-recent-sub { color:rgba(0,0,0,.45); }
+    html[data-colormode="light"] .profile-stats b { color:rgba(0,0,0,.8); }
+    html[data-colormode="light"] .profile-item { border-bottom-color:rgba(0,0,0,.06); }
+    html[data-colormode="light"] .profile-chevron { color:rgba(0,0,0,.25); }
+    html[data-colormode="light"] .watch-hub { background:#fff; }
+    html[data-colormode="light"] .watch-hub-ico,
+    html[data-colormode="light"] .watch-hub-refresh,
+    html[data-colormode="light"] .pc-step-no,
+    html[data-colormode="light"] .person-chip { background:rgba(0,0,0,.06); color:rgba(0,0,0,.6); }
+    html[data-colormode="light"] .watch-hub-cell { background:rgba(0,0,0,.04); }
+    html[data-colormode="light"] .pc-add { background:#fff; border-color:rgba(0,0,0,.12); }
+    html[data-colormode="light"] .person-stat { background:#fff; }
+    html[data-colormode="light"] .person-recent { border-bottom-color:rgba(0,0,0,.06); }
+    html[data-colormode="light"] .person-result.l { background:rgba(0,0,0,.06); color:rgba(0,0,0,.45); }
+    html[data-colormode="light"] .pc-num-input { background:rgba(0,0,0,.05) !important; }
   </style>
 </head>
 <body>
@@ -1489,12 +1581,14 @@
      个人中心
 ══════════════════════════════ -->
 <div class="screen out" id="profileScreen">
-  <div class="back-bar" style="justify-content:space-between">
+  <div class="back-bar pc-bar">
     <button class="back-btn" onclick="navTo('home')">‹ 返回</button>
-    <span class="back-bar-title" style="margin-left:0">个人中心</span>
-    <button class="back-btn" id="profileEditBtn" onclick="toggleProfileEditMode()" style="opacity:.7">管理</button>
+    <span class="pc-bar-title">个人中心</span>
+    <button class="hist-export-btn" id="profileEditBtn" onclick="toggleProfileEditMode()">管理</button>
   </div>
   <div class="settings-scroll">
+    <div id="watchHubCard"></div>
+    <div class="pc-section-title">使用者</div>
     <div id="profileList"></div>
     <!-- 删除模式确认栏 -->
     <div id="profileDeleteBar" style="display:none;padding:10px 16px">
@@ -1504,17 +1598,16 @@
       </button>
     </div>
     <!-- 添加新用户 -->
-    <div class="settings-card" style="margin-top:8px" id="profileAddCard">
-      <div class="settings-row" style="gap:10px;flex-wrap:nowrap">
-        <input class="team-input" id="newProfileName" placeholder="输入名字，添加使用者" maxlength="12"
-               style="flex:1;margin:0" onkeydown="if(event.key==='Enter')submitAddProfile()">
-        <button class="step-btn" style="width:44px;height:44px;border-radius:12px;font-size:22px;flex-shrink:0"
-                onclick="submitAddProfile()">＋</button>
-      </div>
+    <div class="pc-add" style="margin-top:8px" id="profileAddCard">
+      <input class="team-input" id="newProfileName" placeholder="输入名字，添加使用者" maxlength="12"
+             style="flex:1;margin:0" onkeydown="if(event.key==='Enter')submitAddProfile()">
+      <button class="pc-add-btn" onclick="submitAddProfile()" aria-label="添加使用者">＋</button>
     </div>
-    <!-- 底部说明 -->
-    <div style="padding:14px 16px 8px;font-size:12px;color:rgba(255,255,255,.28);line-height:1.65">
-      心率记录开启后，比赛结束时会自动从 Apple Watch 读取对应时段的心率数据用于复盘分析。
+    <div class="pc-section-title">怎么用</div>
+    <div class="settings-card pc-steps">
+      <div class="pc-step"><span class="pc-step-no">1</span><span>添加经常一起打球的人，手表开赛时可以直接选名字。</span></div>
+      <div class="pc-step"><span class="pc-step-no">2</span><span>给戴手表的那个人打开「心率监测」（同一时间只能一个人）。</span></div>
+      <div class="pc-step"><span class="pc-step-no">3</span><span>比赛名单里有他时，手表会记录心率，赛后在详情里看心率曲线和负荷。</span></div>
     </div>
   </div>
 </div>
@@ -2839,48 +2932,132 @@ function navToPerson(id){
   navTo('person');
 }
 
+function readHistorySafe(){
+  try{
+    const all=JSON.parse(localStorage.getItem('sb_history')||'[]');
+    return Array.isArray(all)?all:[];
+  }catch(e){ return []; }
+}
+
+// 某个档案的战绩：按名字或心率归属匹配
+function profileStats(p, all){
+  const matches=all.filter(r=>r&&(r.hrProfileId===p.id||(Array.isArray(r.names)&&r.names.includes(p.name))))
+    .sort((a,b)=>(b.date||0)-(a.date||0));
+  const decided=matches.filter(r=>Array.isArray(r.names)&&r.names.includes(p.name)&&(r.winner===0||r.winner===1));
+  const wins=decided.filter(r=>r.names[r.winner]===p.name).length;
+  const bpms=[];
+  matches.forEach(r=>{
+    if(r.hrProfileId!==p.id||!Array.isArray(r.heartRateTimeline)) return;
+    r.heartRateTimeline.forEach(s=>{ if(s&&s.bpm>=30&&s.bpm<=250) bpms.push(s.bpm); });
+  });
+  return {
+    matches,
+    count:matches.length,
+    wins,
+    winRate:decided.length?Math.round(wins/decided.length*100):null,
+    avgHR:bpms.length?Math.round(bpms.reduce((a,b)=>a+b,0)/bpms.length):null,
+  };
+}
+
+let watchHubStatus=null;
+async function refreshWatchHub(){
+  const card=document.getElementById('watchHubCard');
+  if(!card) return;
+  if(typeof WatchPlugin==='undefined'||!WatchPlugin||typeof WatchPlugin.isAvailable!=='function'){
+    watchHubStatus={unsupported:true};
+  } else {
+    try{ watchHubStatus=await WatchPlugin.isAvailable(); }
+    catch(e){ watchHubStatus={error:true}; }
+  }
+  renderWatchHub();
+}
+
+function renderWatchHub(){
+  const card=document.getElementById('watchHubCard');
+  if(!card) return;
+  const st=watchHubStatus;
+  let dot='#8E8E93', glow='rgba(255,255,255,.06)', label='正在检测…', tip='';
+  if(st){
+    if(st.unsupported){ label='此设备不支持 Apple Watch'; tip='只有 iPhone 版可以和 Apple Watch 互通。'; }
+    else if(st.error){ dot='#FF9500'; label='检测失败'; tip='稍后点右上角「刷新」再试一次。'; }
+    else if(!st.paired){ label='未配对 Apple Watch'; tip='先在 iPhone 的「Watch」App 里完成配对。'; }
+    else if(!st.installed){ dot='#FF9500'; glow='rgba(255,149,0,.18)'; label='手表上还没装记分器'; tip='打开 iPhone 的「Watch」App → 可用的 App → 安装「记分器」。'; }
+    else if(st.reachable){ dot='#34C759'; glow='rgba(52,199,89,.2)'; label='已连接 · 手表在身边'; tip='手机开赛后手表会自动进入同步记分，手表上也能独立开赛。'; }
+    else { dot='#FFCC00'; glow='rgba(255,204,0,.15)'; label='已配对 · 暂时连不上'; tip='抬腕打开手表上的记分器，连接会自动恢复；离线记的比赛会在连上后补传。'; }
+  }
+  const hrP=(profiles||[]).find(p=>p.hrEnabled);
+  const all=readHistorySafe();
+  const watchCount=all.filter(r=>r&&r.swingCount>0||(Array.isArray(r?.heartRateTimeline)&&r.heartRateTimeline.length)).length;
+  card.innerHTML=`<div class="watch-hub" style="--hub-glow:${glow}">
+    <div class="watch-hub-top">
+      <div class="watch-hub-ico">⌚</div>
+      <div style="min-width:0">
+        <div class="watch-hub-title">Apple Watch</div>
+        <div class="watch-hub-state"><span class="watch-dot" style="--dot:${dot}"></span>${escapeHtml(label)}</div>
+      </div>
+      <button class="watch-hub-refresh" onclick="watchHubStatus=null;renderWatchHub();refreshWatchHub()">刷新</button>
+    </div>
+    <div class="watch-hub-rows">
+      <div class="watch-hub-cell">
+        <div class="watch-hub-lbl">心率监测对象</div>
+        <div class="watch-hub-val">${hrP?`❤️ ${escapeHtml(hrP.name)}`:'未设置'}</div>
+      </div>
+      <div class="watch-hub-cell">
+        <div class="watch-hub-lbl">带手表数据的比赛</div>
+        <div class="watch-hub-val">${watchCount} 场</div>
+      </div>
+    </div>
+    ${tip?`<div class="watch-hub-tip">${escapeHtml(tip)}</div>`:''}
+  </div>`;
+}
+
 function renderProfileScreen(){
   const list = document.getElementById('profileList');
   const deleteBar = document.getElementById('profileDeleteBar');
   const addCard = document.getElementById('profileAddCard');
   if(!list) return;
 
-  // 删除确认栏 & 添加框
   if(deleteBar) deleteBar.style.display = (profileEditMode && profileDeleteSelected.size) ? 'block' : 'none';
-  if(addCard) addCard.style.display = profileEditMode ? 'none' : 'block';
+  if(addCard) addCard.style.display = profileEditMode ? 'none' : 'flex';
+
+  renderWatchHub();
+  refreshWatchHub();
 
   if(!profiles.length){
-    list.innerHTML=`<div style="padding:32px 16px;text-align:center;color:rgba(255,255,255,.3);font-size:14px">还没有使用者档案，在下方输入名字来添加。</div>`;
+    list.innerHTML=`<div class="settings-card pc-empty">还没有使用者<br>在下方输入名字添加第一个人</div>`;
     return;
   }
+  const all=readHistorySafe();
   list.innerHTML=`<div class="settings-card" style="padding:0;overflow:hidden">`+
     profiles.map((p,i)=>{
       const color=PROFILE_COLORS[i%PROFILE_COLORS.length];
       const initial=escapeHtml(p.name.trim().charAt(0)||'?');
       const isSelected=profileDeleteSelected.has(p.id);
-      const hrTag = p.hrEnabled?`<span class="profile-active-tag" style="background:rgba(255,59,48,.15);color:#FF3B30">❤️ 心率监测</span>`:'';
+      const hrTag = p.hrEnabled?`<span class="profile-active-tag" style="background:rgba(255,59,48,.15);color:#FF6B61">❤️ 心率</span>`:'';
+      const selfTag = p.isSelf?`<span class="profile-active-tag" style="background:rgba(52,199,89,.15);color:#4CD964">本人</span>`:'';
+      const st=profileStats(p, all);
+      const statsLine = st.count
+        ? `<div class="profile-stats"><span><b>${st.count}</b> 场</span>${st.winRate!=null?`<span>胜率 <b>${st.winRate}%</b></span>`:''}${st.avgHR?`<span>均心率 <b>${st.avgHR}</b></span>`:''}</div>`
+        : `<div class="profile-sub">还没有比赛记录</div>`;
+      const avatar=`<div class="profile-avatar lg" style="background:linear-gradient(135deg,${color},${color}99)">${initial}</div>`;
       if(profileEditMode){
-        // 管理模式：多选删除
-        return `<div class="profile-item${isSelected?' pf-del-selected':''}"
-                     onclick="toggleProfileDeleteSelect(${p.id})">
+        return `<div class="profile-item${isSelected?' pf-del-selected':''}" onclick="toggleProfileDeleteSelect(${p.id})">
           <div class="profile-del-checkbox${isSelected?' checked':''}">${isSelected?'✓':''}</div>
-          <div class="profile-avatar" style="background:${color}">${initial}</div>
-          <div class="profile-info" style="flex:1">
-            <div class="profile-name-row"><span>${escapeHtml(p.name)}</span>${hrTag}</div>
-            <div class="profile-sub">心率监测：${p.hrEnabled?'已开启':'未开启'}</div>
+          ${avatar}
+          <div class="profile-info">
+            <div class="profile-name-row"><span>${escapeHtml(p.name)}</span>${hrTag}${selfTag}</div>
+            ${statsLine}
           </div>
-        </div>`;
-      } else {
-        // 正常模式：点击进详情页修改设置（含开关心率监测）
-        return `<div class="profile-item">
-          <div class="profile-avatar" style="background:${color}">${initial}</div>
-          <div class="profile-info" style="flex:1;cursor:pointer" onclick="navToPerson(${p.id})">
-            <div class="profile-name-row"><span>${escapeHtml(p.name)}</span>${hrTag}</div>
-            <div class="profile-sub">心率监测：${p.hrEnabled?'已开启':'未开启'} · 点击查看详情</div>
-          </div>
-          <span style="color:rgba(255,255,255,.25);font-size:18px;pointer-events:none">›</span>
         </div>`;
       }
+      return `<div class="profile-item" onclick="navToPerson(${p.id})">
+        ${avatar}
+        <div class="profile-info">
+          <div class="profile-name-row"><span>${escapeHtml(p.name)}</span>${hrTag}${selfTag}</div>
+          ${statsLine}
+        </div>
+        <span class="profile-chevron">›</span>
+      </div>`;
     }).join('')+`</div>`;
 }
 
@@ -2889,55 +3066,74 @@ function renderPersonScreen(id){
   const body = document.getElementById('personBody');
   if(!body) return;
   const p = profiles.find(x=>x.id===id);
-  if(!p){ body.innerHTML=`<div style="padding:40px 16px;text-align:center;color:rgba(255,255,255,.3)">找不到此档案</div>`; return; }
+  if(!p){ body.innerHTML=`<div class="pc-empty">找不到此档案</div>`; return; }
   const color = PROFILE_COLORS[profiles.indexOf(p)%PROFILE_COLORS.length];
   const initial = escapeHtml(p.name.trim().charAt(0)||'?');
-  const isActive = p.id===activeProfileId;
+  const st = profileStats(p, readHistorySafe());
+  const myMatches = st.matches;
 
-  // 统计此人的比赛数
-  let allHistory=[];
-  try{ allHistory=JSON.parse(localStorage.getItem('sb_history')||'[]'); }catch(e){}
-  const myMatches = allHistory.filter(r=>r.hrProfileId===p.id || r.names?.includes(p.name));
+  const recent = myMatches.slice(0,3).map(r=>{
+    const names=Array.isArray(r.names)?r.names:['',''];
+    const meIdx=names.indexOf(p.name);
+    const won = meIdx>=0 && r.winner===meIdx;
+    const decided = meIdx>=0 && (r.winner===0||r.winner===1);
+    const opp = meIdx===0?names[1]:meIdx===1?names[0]:`${names[0]} vs ${names[1]}`;
+    const d=new Date(r.date);
+    const major=getMatchDisplayScores(r).major;
+    const sc=meIdx===1?major.split(' : ').reverse().join(' : '):major;
+    return `<div class="person-recent" onclick="openDetail(${Number(r.id)})">
+      <span class="person-result ${won?'w':'l'}">${decided?(won?'胜':'负'):'—'}</span>
+      <div class="person-recent-main">
+        <div class="person-recent-title">${meIdx>=0?'vs ':''}${escapeHtml(opp)}</div>
+        <div class="person-recent-sub">${escapeHtml(SPORT_LABELS[r.sport]||r.sport||'')} · ${d.getMonth()+1}/${d.getDate()}${r.duration?` · ${fmtDuration(r.duration)}`:''}</div>
+      </div>
+      <span class="person-recent-score">${escapeHtml(sc)}</span>
+    </div>`;
+  }).join('');
 
   body.innerHTML=`
-    <!-- 头部 -->
-    <div style="display:flex;align-items:center;gap:16px;padding:20px 20px 16px">
-      <div class="profile-avatar" style="width:60px;height:60px;font-size:22px;background:${color}">${initial}</div>
-      <div style="flex:1">
-        <div id="personNameDisplay" style="font-size:20px;font-weight:700;color:#fff;margin-bottom:4px">${escapeHtml(p.name)}</div>
-        ${p.hrEnabled
-          ? `<div style="font-size:12px;color:#FF3B30;font-weight:600">❤️ 心率监测中</div>`
-          : `<div style="font-size:12px;color:rgba(255,255,255,.3)">心率监测未开启</div>`
-        }
+    <div class="person-hero">
+      <div class="person-avatar" style="background:linear-gradient(135deg,${color},${color}99);--ring:${color}">${initial}</div>
+      <div class="person-name" id="personNameDisplay">${escapeHtml(p.name)}</div>
+      <div class="person-chips">
+        ${p.hrEnabled?'<span class="person-chip hr">❤️ 心率监测中</span>':'<span class="person-chip">心率监测未开启</span>'}
+        ${p.isSelf?'<span class="person-chip self">本人</span>':''}
       </div>
     </div>
+    <div class="person-stats">
+      <div class="person-stat"><div class="person-stat-val">${st.count}</div><div class="person-stat-lbl">场次</div></div>
+      <div class="person-stat"><div class="person-stat-val">${st.winRate!=null?st.winRate+'%':'—'}</div><div class="person-stat-lbl">胜率</div></div>
+      <div class="person-stat"><div class="person-stat-val">${st.avgHR??'—'}</div><div class="person-stat-lbl">平均心率</div></div>
+    </div>
 
-    <!-- 修改名字 -->
+    ${recent?`<div class="pc-section-title">最近比赛</div><div class="settings-card" style="overflow:hidden">${recent}</div>`:''}
+
+    <div class="pc-section-title">名字</div>
     <div class="settings-card">
       <div class="settings-row" style="gap:10px;flex-wrap:nowrap">
         <input class="team-input" id="personNameInput" value="${escapeHtml(p.name)}" maxlength="12"
-               placeholder="修改名字" style="flex:1;margin:0"
+               placeholder="修改名字" style="flex:1;margin:0;text-align:left"
                onkeydown="if(event.key==='Enter')savePersonName(${p.id})">
-        <button class="step-btn" style="width:64px;height:44px;border-radius:12px;font-size:14px;flex-shrink:0"
+        <button class="choice-btn" style="padding:8px 16px;font-size:13px"
                 onclick="savePersonName(${p.id})">保存</button>
       </div>
     </div>
 
-    <!-- 心率监测 -->
-    <div class="settings-card" style="margin-top:8px">
+    <div class="pc-section-title">Apple Watch 心率</div>
+    <div class="settings-card">
       <div class="settings-row">
         <div class="settings-copy">
           <div class="settings-title">心率监测</div>
-          <div class="settings-desc">开启后，比赛名单里填了此人就用 Apple Watch 记录心率（同时只能开一个人）</div>
+          <div class="settings-desc">比赛名单里有此人时，用 Apple Watch 记录心率。同一时间只能开一个人。</div>
         </div>
         <button class="toggle-btn${p.hrEnabled?' on':''}" id="personHRBtn"
                 onclick="toggleProfileHR(${p.id});renderPersonScreen(${p.id})">${p.hrEnabled?'开启':'关闭'}</button>
       </div>
       ${p.hrEnabled?`
-      <div class="settings-row" style="border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
+      <div class="settings-row">
         <div class="settings-copy">
-          <div class="settings-title">这是我本人 🙋</div>
-          <div class="settings-desc">本人则年龄/静息心率自动用本机健康数据；借表给别人打则关掉、手填对方年龄</div>
+          <div class="settings-title">这是我本人</div>
+          <div class="settings-desc">本人会自动读取健康 App 的年龄和静息心率；借表给别人时请关掉，手填对方年龄。</div>
         </div>
         <button class="toggle-btn${p.isSelf?' on':''}"
                 onclick="toggleProfileSelf(${p.id});renderPersonScreen(${p.id})">${p.isSelf?'是':'否'}</button>
@@ -2945,63 +3141,48 @@ function renderPersonScreen(id){
       <div class="settings-row">
         <div class="settings-copy">
           <div class="settings-title">年龄</div>
-          <div class="settings-desc">${p.isSelf&&p.age==null&&selfHRMetrics.age?`已自动读取：${selfHRMetrics.age} 岁`:'推算最大心率'}</div>
+          <div class="settings-desc">${p.isSelf&&p.age==null&&selfHRMetrics.age?`已自动读取：${selfHRMetrics.age} 岁`:'用来推算最大心率'}</div>
         </div>
-        <input type="number" class="team-input" value="${p.age??''}" placeholder="${p.isSelf&&selfHRMetrics.age?selfHRMetrics.age:'--'}" min="5" max="110"
-               style="width:60px;text-align:center;margin:0"
+        <input type="number" inputmode="numeric" class="team-input pc-num-input" value="${p.age??''}" placeholder="${p.isSelf&&selfHRMetrics.age?selfHRMetrics.age:'--'}" min="5" max="110"
                onchange="savePersonHRMetric(${p.id},'age',this.value)">
       </div>
       <div class="settings-row">
         <div class="settings-copy">
           <div class="settings-title">静息心率</div>
-          <div class="settings-desc">${p.isSelf&&p.restingHR==null&&selfHRMetrics.restingHR?`已自动读取：${selfHRMetrics.restingHR} bpm`:(p.isSelf&&!selfHRMetrics.restingHR?'健康 App 暂无数据，可手填或留空':'更精确的区间划分（可选）')}</div>
+          <div class="settings-desc">${p.isSelf&&p.restingHR==null&&selfHRMetrics.restingHR?`已自动读取：${selfHRMetrics.restingHR} bpm`:(p.isSelf&&!selfHRMetrics.restingHR?'健康 App 暂无数据，可手填或留空':'可选，让心率区间更准')}</div>
         </div>
-        <input type="number" class="team-input" value="${p.restingHR??''}" placeholder="${p.isSelf&&selfHRMetrics.restingHR?selfHRMetrics.restingHR:'--'}" min="30" max="120"
-               style="width:60px;text-align:center;margin:0"
+        <input type="number" inputmode="numeric" class="team-input pc-num-input" value="${p.restingHR??''}" placeholder="${p.isSelf&&selfHRMetrics.restingHR?selfHRMetrics.restingHR:'--'}" min="30" max="120"
                onchange="savePersonHRMetric(${p.id},'restingHR',this.value)">
       </div>`:''}
     </div>
 
-    <!-- 体能趋势 -->
     ${buildFitnessTrend(p, myMatches)}
 
     ${p.isSelf ? `
-    <!-- Watch 挥拍检测设置（仅对"本人"档案显示）-->
-    <div class="settings-card" style="margin-top:8px">
-      <div style="color:#fff;font-size:15px;font-weight:700;padding:4px 0 8px">⌚ 挥拍检测</div>
+    <div class="pc-section-title">挥拍检测</div>
+    <div class="settings-card">
       <div class="settings-row">
         <div class="settings-copy">
           <div class="settings-title">击球声确认</div>
-          <div class="settings-desc">${getAudioGatingEnabled()?'开启：仅听到击球声时才计数，更准确':'关闭：纯传感器模式，适合空挥练习'}</div>
+          <div class="settings-desc">${getAudioGatingEnabled()?'开启：听到击球声才计数，更准确':'关闭：纯传感器模式，适合空挥练习'}</div>
         </div>
         <button class="toggle-btn${getAudioGatingEnabled()?' on':''}"
-                onclick="toggleAudioGating();renderPersonScreen(${p.id})">
-          ${getAudioGatingEnabled()?'开启':'关闭'}
-        </button>
+                onclick="toggleAudioGating();renderPersonScreen(${p.id})">${getAudioGatingEnabled()?'开启':'关闭'}</button>
       </div>
     </div>` : ''}
 
-    <!-- 数据导出 -->
-    <div class="settings-card" style="margin-top:8px">
+    <div class="pc-section-title">数据</div>
+    <div class="settings-card">
       <div class="settings-row" style="cursor:pointer" onclick="exportPersonData(${p.id})">
         <div class="settings-copy">
-          <div class="settings-title">导出数据</div>
-          <div class="settings-desc">导出相关的 ${myMatches.length} 场比赛记录（JSON）</div>
+          <div class="settings-title">导出比赛记录</div>
+          <div class="settings-desc">导出相关的 ${myMatches.length} 场比赛（JSON）</div>
         </div>
-        <span style="color:rgba(255,255,255,.3);font-size:20px">›</span>
+        <span class="profile-chevron">›</span>
       </div>
     </div>
-
-    <!-- 删除档案 -->
-    <div class="settings-card" style="margin-top:8px">
-      <div class="settings-row" style="cursor:pointer" onclick="confirmDeleteProfile(${p.id})">
-        <div class="settings-copy">
-          <div class="settings-title" style="color:rgba(255,80,80,.85)">删除档案</div>
-          <div class="settings-desc">仅删除此身份，不影响历史比赛记录</div>
-        </div>
-        <span style="color:rgba(255,80,80,.4);font-size:20px">›</span>
-      </div>
-    </div>
+    <button class="person-danger" onclick="confirmDeleteProfile(${p.id})">删除档案</button>
+    <div class="pc-empty" style="padding:8px 16px 4px;font-size:12px">只删除这个身份，历史比赛记录会保留</div>
   `;
 }
 

@@ -15,6 +15,7 @@ final class WatchMatchManager: ObservableObject {
         let setScores: [[Int]]
         let setTimes: [Int]
         let isMatchActive: Bool
+        let eventCount: Int
     }
 
     struct MatchEvent {
@@ -63,7 +64,12 @@ final class WatchMatchManager: ObservableObject {
     /// 比赛结束后的结算结果，非 nil 时 ContentView 显示结算页（本地赛 + 镜像赛通用）
     struct Result: Equatable {
         let winnerName: String
+        let loserName: String
+        let winnerIsA: Bool
         let scoreLine: String
+        /// 每局/每节比分，如 "21-15  18-21  21-19"
+        let detailLine: String
+        let durationSeconds: Int
     }
     @Published var lastResult: Result? = nil
 
@@ -298,7 +304,25 @@ final class WatchMatchManager: ObservableObject {
         let scoreLine = supportsMultiPoint
             ? "\(teamAScore) : \(teamBScore)"
             : "\(setWins[0]) : \(setWins[1])"
-        return Result(winnerName: winner == 0 ? teamAName : teamBName, scoreLine: scoreLine)
+        let parts = supportsMultiPoint ? buildBasketballPeriodScores() : setScores
+        let detailLine = parts.map { "\($0[0])-\($0[1])" }.joined(separator: "  ")
+        return Result(winnerName: winner == 0 ? teamAName : teamBName,
+                      loserName: winner == 0 ? teamBName : teamAName,
+                      winnerIsA: winner == 0,
+                      scoreLine: scoreLine,
+                      detailLine: detailLine,
+                      durationSeconds: elapsedSeconds)
+    }
+
+    /// 某方再得 1 分即可拿下本局/整场时返回"局点"/"赛点"，否则 nil。
+    /// 仅对规则已知的回合制比赛生效（镜像网球的规则由手机按 15/30/40 计，手表不猜）。
+    func pointBadge(for team: Int) -> String? {
+        guard isMatchActive, !supportsMultiPoint, ptWin > 0 else { return nil }
+        if sport == "tennis" && sessionSource != .local { return nil }
+        let a = teamAScore + (team == 0 ? 1 : 0)
+        let b = teamBScore + (team == 1 ? 1 : 0)
+        guard rallyWinner(a, b) == team else { return nil }
+        return setWins[team] + 1 >= setWin ? "赛点" : "局点"
     }
 
     func addPoint(team: Int) {
@@ -346,7 +370,13 @@ final class WatchMatchManager: ObservableObject {
     }
 
     func undo() {
-        guard sessionSource == .local, let last = history.popLast() else { return }
+        // 镜像赛也要本地回退：手机端比分会随 undo 变小，而 applyPhoneState 是 max 对齐，
+        // 不先降本地值的话手表会一直显示撤销前的比分。
+        guard sessionSource != .none, let last = history.popLast() else { return }
+        if matchEvents.count > last.eventCount {
+            matchEvents.removeLast(matchEvents.count - last.eventCount)
+        }
+        lastEventElapsedMs = matchEvents.last?.elapsedMs ?? 0
         teamAScore = last.teamAScore
         teamBScore = last.teamBScore
         isPaused = last.isPaused
@@ -570,7 +600,8 @@ final class WatchMatchManager: ObservableObject {
                 setWins: setWins,
                 setScores: setScores,
                 setTimes: setTimes,
-                isMatchActive: isMatchActive
+                isMatchActive: isMatchActive,
+                eventCount: matchEvents.count
             )
         )
         canUndo = true

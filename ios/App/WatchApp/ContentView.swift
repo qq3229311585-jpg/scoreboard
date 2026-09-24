@@ -1,6 +1,20 @@
 import SwiftUI
 import WatchKit
 
+// MARK: - Palette
+
+/// 与手机端默认主题保持一致，红蓝两方在两端颜色相同，一眼能对上。
+enum Palette {
+    static let teamA  = Color(hex: "#D95F4B")
+    static let teamB  = Color(hex: "#4A7FA8")
+    static let accent = Color(hex: "#C8E645")
+    static let win    = Color(hex: "#30D158")
+    static let heart  = Color(hex: "#FF453A")
+    static let pause  = Color(hex: "#FFD60A")
+    static let info   = Color(hex: "#5AC8FA")
+    static let card   = Color.white.opacity(0.08)
+}
+
 // MARK: - Root
 
 struct ContentView: View {
@@ -36,56 +50,103 @@ struct ContentView: View {
 
 struct IdleView: View {
     @EnvironmentObject var match: WatchMatchManager
+    @EnvironmentObject var phone: PhoneSessionManager
 
-    private let sports: [(id: String, name: String, symbol: String, hex: String)] = [
-        ("badminton",   "羽毛球", "figure.badminton",    "#2A6B5B"),
-        ("tabletennis", "乒乓球", "figure.table.tennis", "#7A3A2A"),
-        ("tennis",      "网球",   "figure.tennis",       "#4A6B2A"),
-        ("basketball",  "篮球",   "figure.basketball",   "#7A4E20"),
+    private struct Sport: Identifiable {
+        let id: String; let name: String; let symbol: String; let hex: String; let hint: String
+    }
+
+    private let sports: [Sport] = [
+        Sport(id: "badminton",   name: "羽毛球", symbol: "figure.badminton",    hex: "#2A7A66", hint: "21 分"),
+        Sport(id: "tabletennis", name: "乒乓球", symbol: "figure.table.tennis", hex: "#8A4030", hint: "11 分"),
+        Sport(id: "tennis",      name: "网球",   symbol: "figure.tennis",       hex: "#56792E", hint: "6 局"),
+        Sport(id: "basketball",  name: "篮球",   symbol: "figure.basketball",   hex: "#8A5A22", hint: "4 节"),
     ]
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 10) {
-                LazyVGrid(
-                    columns: [GridItem(.flexible(), spacing: 6),
-                              GridItem(.flexible(), spacing: 6)],
-                    spacing: 6
-                ) {
-                    ForEach(sports, id: \.id) { sport in
-                        // 导航到比赛设置页
+            VStack(alignment: .leading, spacing: 8) {
+                statusRow
+
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 6),
+                                    GridItem(.flexible(), spacing: 6)],
+                          spacing: 6) {
+                    ForEach(sports) { sport in
                         NavigationLink {
                             MatchSettingsView(sport: sport.id, sportName: sport.name)
                         } label: {
-                            SportCard(symbol: sport.symbol,
-                                      name: sport.name,
-                                      hex: sport.hex)
+                            SportCard(symbol: sport.symbol, name: sport.name,
+                                      hint: sport.hint, hex: sport.hex)
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 6)
-                .padding(.bottom, 10)
+
+                Text(phone.isReachable
+                     ? "在手机上开赛，手表会自动进入同步记分"
+                     : "未连接 iPhone 也能独立开赛，结束后自动同步")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 2)
             }
+            .padding(.horizontal, 6)
+            .padding(.bottom, 8)
         }
+        .navigationTitle("记分器")
         .navigationBarBackButtonHidden(true)
+    }
+
+    private var statusRow: some View {
+        HStack(spacing: 6) {
+            StatusChip(icon: phone.isReachable ? "iphone" : "iphone.slash",
+                       text: phone.isReachable ? "已连接" : "独立模式",
+                       color: phone.isReachable ? Palette.win : .white.opacity(0.45))
+            if !match.hrPersonName.isEmpty {
+                StatusChip(icon: "heart.fill", text: match.hrPersonName, color: Palette.heart)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+struct StatusChip: View {
+    let icon: String; let text: String; let color: Color
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: icon).font(.system(size: 9, weight: .semibold))
+            Text(text).font(.system(size: 10, weight: .semibold)).lineLimit(1)
+        }
+        .foregroundStyle(color)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(color.opacity(0.15), in: Capsule())
     }
 }
 
 struct SportCard: View {
-    let symbol: String; let name: String; let hex: String
+    let symbol: String; let name: String; let hint: String; let hex: String
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 2) {
             Image(systemName: symbol)
-                .font(.system(size: 26, weight: .medium))
-                .foregroundStyle(.white.opacity(0.92))
-            Text(name)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.system(size: 22, weight: .medium))
                 .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 4)
+            Text(name)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+            Text(hint)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.white.opacity(0.6))
         }
-        .frame(maxWidth: .infinity, minHeight: 72)
-        .background(Color(hex: hex),
-                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(9)
+        .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
+        .background(
+            LinearGradient(colors: [Color(hex: hex), Color(hex: hex).opacity(0.55)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
     }
 }
 
@@ -118,7 +179,6 @@ struct MatchSettingsView: View {
     // B 用的是 nameOptionsB（已去掉 A 选中的那个），默认就指它的第一项；
     // 设成 1 会在名单只剩 1 项时越界，回退成"对手"。
     @State private var selectedB = 0
-    // 非篮球规则
     @State private var ptWin: Int
     @State private var totalSets: Int
 
@@ -138,53 +198,45 @@ struct MatchSettingsView: View {
         _totalSets = State(initialValue: 3)
     }
 
+    private var ruleSummary: String {
+        if sport == "basketball" { return "4 节 · 累计得分 · 平分进加时" }
+        let unit = sport == "tennis" ? "局" : "分"
+        let sets = totalSets == 1 ? "1 局定胜负" : "\(totalSets) 局 \(Int(ceil(Double(totalSets) / 2))) 胜"
+        return "先到 \(ptWin) \(unit) · \(sets)"
+    }
+
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 8) {
-                // ── 球员名选择 ──
                 settingsCard {
                     VStack(spacing: 0) {
-                        pickerRow(
-                            label: sport == "basketball" ? "主队" : "红方",
-                            options: nameOptions,
-                            selection: $selectedA
-                        )
+                        pickerRow(color: Palette.teamA, options: nameOptions, selection: $selectedA)
                         Divider().background(.white.opacity(0.08))
-                        pickerRow(
-                            label: sport == "basketball" ? "客队" : "蓝方",
-                            options: nameOptionsB,
-                            selection: $selectedB
-                        )
-                        .onChange(of: selectedA) { _ in
-                            // A 换人后 B 重置到第一个（避免 index 越界或隐式指向旧名字）
-                            selectedB = 0
-                        }
+                        pickerRow(color: Palette.teamB, options: nameOptionsB, selection: $selectedB)
+                            .onChange(of: selectedA) { _ in
+                                // A 换人后 B 重置到第一个（避免 index 越界或隐式指向旧名字）
+                                selectedB = 0
+                            }
                     }
                 }
 
-                // ── 分数规则（非篮球）──
                 if sport != "basketball" {
                     settingsCard {
                         VStack(spacing: 0) {
                             stepperRow(label: sport == "tennis" ? "赢局" : "赢分",
-                                       options: ptOptions,
-                                       value: $ptWin)
+                                       options: ptOptions, value: $ptWin)
                             Divider().background(.white.opacity(0.08))
-                            stepperRow(label: "局数",
-                                       options: setOptions,
-                                       value: $totalSets)
+                            stepperRow(label: "局数", options: setOptions, value: $totalSets)
                         }
-                    }
-                    if sport == "tennis" {
-                        Text("简化版网球：先赢 N 局且领先 2 局。无 15/30/40 与抢七。")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.white.opacity(0.45))
-                            .padding(.horizontal, 6)
-                            .multilineTextAlignment(.leading)
                     }
                 }
 
-                // ── 开始按钮 ──
+                Text(sport == "tennis" ? ruleSummary + "\n简化网球：无 15/30/40 与抢七" : ruleSummary)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.45))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+
                 Button {
                     WKInterfaceDevice.current().play(.start)
                     match.startLocalMatch(
@@ -195,19 +247,17 @@ struct MatchSettingsView: View {
                         totalSets: sport == "basketball" ? 4 : totalSets
                     )
                 } label: {
-                    Text("开始比赛")
+                    Label("开始比赛", systemImage: "play.fill")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(Color(hex: "#C8E645"),
-                                    in: RoundedRectangle(cornerRadius: 12))
+                        .background(Palette.accent, in: Capsule())
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, 4)
                 .padding(.bottom, 8)
             }
             .padding(.horizontal, 6)
-            .padding(.top, 4)
+            .padding(.top, 2)
         }
         .navigationTitle(sportName)
         .navigationBarTitleDisplayMode(.inline)
@@ -228,20 +278,17 @@ struct MatchSettingsView: View {
         }
     }
 
-    // MARK: helpers
     @ViewBuilder
     private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .background(.white.opacity(0.07),
-                         in: RoundedRectangle(cornerRadius: 12))
+            .background(Palette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
-    private func pickerRow(label: String, options: [String], selection: Binding<Int>) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(0.7))
-                .frame(width: 34, alignment: .leading)
+    private func pickerRow(color: Color, options: [String], selection: Binding<Int>) -> some View {
+        HStack(spacing: 6) {
+            Capsule()
+                .fill(color)
+                .frame(width: 4, height: 28)
             Picker("", selection: selection) {
                 ForEach(options.indices, id: \.self) { i in
                     Text(options[i]).tag(i)
@@ -251,52 +298,51 @@ struct MatchSettingsView: View {
             .frame(height: 52)
             .clipped()
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 8)
         .padding(.vertical, 2)
     }
 
     private func stepperRow(label: String, options: [Int], value: Binding<Int>) -> some View {
-        HStack {
+        let idx = options.firstIndex(of: value.wrappedValue)
+        let canDec = (idx ?? 0) > 0
+        let canInc = (idx ?? options.count - 1) < options.count - 1
+        return HStack {
             Text(label)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.white.opacity(0.7))
             Spacer()
-            HStack(spacing: 12) {
-                Button {
-                    if let idx = options.firstIndex(of: value.wrappedValue), idx > 0 {
-                        value.wrappedValue = options[idx - 1]
-                    }
-                } label: {
-                    Image(systemName: "minus")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 28, height: 28)
-                        .background(.white.opacity(0.15), in: Circle())
+            HStack(spacing: 10) {
+                stepButton("minus", enabled: canDec) {
+                    if let idx, idx > 0 { value.wrappedValue = options[idx - 1] }
                 }
-                .buttonStyle(.plain)
-
                 Text("\(value.wrappedValue)")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .frame(minWidth: 28)
-
-                Button {
-                    if let idx = options.firstIndex(of: value.wrappedValue),
-                       idx < options.count - 1 {
-                        value.wrappedValue = options[idx + 1]
-                    }
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 28, height: 28)
-                        .background(.white.opacity(0.15), in: Circle())
+                    .contentTransition(.numericText())
+                    .frame(minWidth: 26)
+                stepButton("plus", enabled: canInc) {
+                    if let idx, idx < options.count - 1 { value.wrappedValue = options[idx + 1] }
                 }
-                .buttonStyle(.plain)
             }
+            .animation(.snappy, value: value.wrappedValue)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
+    }
+
+    private func stepButton(_ icon: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            WKInterfaceDevice.current().play(.click)
+            action()
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white.opacity(enabled ? 1 : 0.3))
+                .frame(width: 30, height: 30)
+                .background(.white.opacity(enabled ? 0.16 : 0.06), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
     }
 }
 
@@ -308,23 +354,22 @@ struct MatchView: View {
     @EnvironmentObject var phone: PhoneSessionManager
     @EnvironmentObject var swingDetector: SwingDetector
 
-    @State private var showFinishConfirm = false
-
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
                 topBar
                     .padding(.horizontal, 8)
                     .padding(.top, 2)
-                    .padding(.bottom, 3)
+                    .padding(.bottom, 4)
 
-                // ── 左右双面板 ──
                 HStack(spacing: 5) {
                     PanelView(
                         name: match.teamAName,
                         score: match.teamAScore,
                         subtitle: match.teamASubtitle,
-                        hex: "#C83030",
+                        color: Palette.teamA,
+                        isLeading: match.teamAScore > match.teamBScore,
+                        badge: match.pointBadge(for: 0),
                         supportsMultiPoint: match.supportsMultiPoint,
                         onPoint: { primaryScore(team: 0) },
                         onPlus2: { addScore(team: 0, delta: 2) },
@@ -334,7 +379,9 @@ struct MatchView: View {
                         name: match.teamBName,
                         score: match.teamBScore,
                         subtitle: match.teamBSubtitle,
-                        hex: "#1E5FA0",
+                        color: Palette.teamB,
+                        isLeading: match.teamBScore > match.teamAScore,
+                        badge: match.pointBadge(for: 1),
                         supportsMultiPoint: match.supportsMultiPoint,
                         onPoint: { primaryScore(team: 1) },
                         onPlus2: { addScore(team: 1, delta: 2) },
@@ -346,31 +393,18 @@ struct MatchView: View {
 
                 bottomBar
                     .padding(.horizontal, 8)
-                    .padding(.top, 3)
+                    .padding(.top, 4)
                     .padding(.bottom, 2)
             }
             .background(Color.black.ignoresSafeArea())
 
-            // ── 暂停遮罩 ──
             if match.isPaused {
-                PauseOverlay(onReset: {
-                    // 重新设置：直接结束当前比赛，回到首页（NavigationStack pop）
-                    match.forceReset()
-                })
+                PauseOverlay(onReset: { match.forceReset() })
+                    .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: match.isPaused)
         .navigationBarBackButtonHidden(true)
-        .alert("结束比赛", isPresented: $showFinishConfirm) {
-            Button("结束", role: .destructive) {
-                if match.isLocalSession { match.finishLocalMatch() }
-                else {
-                    // .phone 镜像赛：手表以最终状态为权威，构建记录经 transferUserInfo
-                    // 保证送达手机（手机死活都不丢），不再仅发 stopWorkout 依赖手机自存。
-                    match.finishMirrorMatch()
-                }
-            }
-            Button("取消", role: .cancel) {}
-        }
     }
 
     // MARK: 顶部状态栏
@@ -379,10 +413,12 @@ struct MatchView: View {
             HStack(spacing: 2) {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 9))
-                    .foregroundStyle(Color(hex: "#FF3B30"))
+                    .foregroundStyle(workout.heartRate > 0 ? Palette.heart : .white.opacity(0.25))
+                    .symbolEffect(.pulse, isActive: workout.heartRate > 0)
                 Text(workout.heartRate > 0 ? "\(Int(workout.heartRate))" : "--")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
+                    .contentTransition(.numericText())
             }
             .frame(minWidth: 44, alignment: .leading)
 
@@ -391,12 +427,12 @@ struct MatchView: View {
             VStack(spacing: 0) {
                 Text(match.periodLabel.isEmpty ? match.sportLabel : match.periodLabel)
                     .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(match.sessionSource == .local
-                        ? Color(hex: "#4CD964") : Color(hex: "#5AC8FA"))
+                    .foregroundStyle(match.sessionSource == .local ? Palette.win : Palette.info)
                     .lineLimit(1)
                 Text(formatTime(match.elapsedSeconds))
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.white.opacity(0.7))
             }
 
             Spacer()
@@ -406,72 +442,75 @@ struct MatchView: View {
                     HStack(spacing: 1) {
                         Image(systemName: "figure.badminton")
                             .font(.system(size: 9))
-                            .foregroundStyle(Color(hex: "#FFD60A"))
                         Text("\(swingDetector.swingCount)")
                             .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color(hex: "#FFD60A"))
                     }
+                    .foregroundStyle(Palette.pause)
                 }
-                if phone.isReachable {
-                    Image(systemName: "iphone")
-                        .font(.system(size: 10))
-                        .foregroundStyle(Color(hex: "#4CD964"))
-                } else {
-                    Image(systemName: "wifi.slash")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.white.opacity(0.22))
-                }
+                // 镜像赛才关心手机连接；独立赛显示"独立"更直观
+                Image(systemName: match.sessionSource == .phone
+                      ? (phone.isReachable ? "iphone" : "iphone.slash")
+                      : "applewatch")
+                    .font(.system(size: 10))
+                    .foregroundStyle(match.sessionSource == .phone && !phone.isReachable
+                                     ? Palette.pause : .white.opacity(0.4))
             }
             .frame(minWidth: 44, alignment: .trailing)
         }
     }
 
     // MARK: 底部控制栏
+    // "结束比赛"只放在暂停页里：记分时手腕乱碰最容易误触，结束又不可撤销。
     private var bottomBar: some View {
-        HStack(spacing: 4) {
-            ctrlBtn(icon: "arrow.uturn.backward",
-                    color: match.canUndo ? .white.opacity(0.55) : .white.opacity(0.18)) {
-                guard match.canUndo else { return }
-                haptic(.click)
-                if match.isLocalSession { match.undo() }
-                else { phone.sendControl("undo") }
+        HStack(spacing: 5) {
+            ctrlBtn(icon: "arrow.uturn.backward", tint: .white, enabled: match.canUndo) {
+                WKInterfaceDevice.current().play(.click)
+                undo()
             }
-            ctrlBtn(icon: "pause.fill", color: Color(hex: "#FFD60A")) {
-                haptic(.directionUp)
-                if match.isLocalSession { match.togglePause() }
-                else { phone.sendControl("togglePause") }
+            ctrlBtn(icon: "pause.fill", tint: Palette.pause, enabled: true) {
+                WKInterfaceDevice.current().play(.stop)
+                togglePause(match: match, phone: phone)
             }
             if match.supportsMultiPoint {
-                ctrlBtn(icon: "forward.end.fill", color: Color(hex: "#5AC8FA")) {
-                    haptic(.success)
+                ctrlBtn(icon: "forward.end.fill", tint: Palette.info, enabled: true) {
+                    WKInterfaceDevice.current().play(.success)
                     if match.isLocalSession { match.nextPeriod() }
                     else { phone.sendControl("nextPeriod") }
                 }
             }
-            ctrlBtn(icon: "xmark.circle.fill", color: Color(hex: "#FF3B30")) {
-                haptic(.failure)
-                showFinishConfirm = true
-            }
         }
     }
 
-    private func ctrlBtn(icon: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func ctrlBtn(icon: String, tint: Color, enabled: Bool,
+                         action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(color)
-                .frame(maxWidth: .infinity, minHeight: 28)
-                .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 8))
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(enabled ? tint : .white.opacity(0.2))
+                .frame(maxWidth: .infinity, minHeight: 32)
+                .background(Palette.card, in: Capsule())
         }
         .buttonStyle(.plain)
+        .disabled(!enabled)
     }
 
-    private func addScore(team: Int, delta: Int) {
-        // 更强的震动：连续两次 click，达到明显感知
+    private func undo() {
+        guard match.canUndo else { return }
+        let mirror = match.sessionSource == .phone
+        match.undo()
+        if mirror { phone.sendControl("undo") }
+    }
+
+    // 记分震动保持原先的"连震两下"，戴着手表挥拍时单次 click 容易感觉不到
+    private func scoreHaptic() {
         WKInterfaceDevice.current().play(.notification)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             WKInterfaceDevice.current().play(.notification)
         }
+    }
+
+    private func addScore(team: Int, delta: Int) {
+        scoreHaptic()
         // 数据对齐方案：无论独立赛还是镜像赛，永远本地立即累计；
         // 镜像赛额外通知手机（手机端 seq 去重+max 对齐，手机锁屏走 transferUserInfo 兜底）
         match.addScore(team: team, delta: delta)
@@ -485,58 +524,89 @@ struct MatchView: View {
             addScore(team: team, delta: 1)
             return
         }
-        WKInterfaceDevice.current().play(.notification)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            WKInterfaceDevice.current().play(.notification)
-        }
+        scoreHaptic()
         match.addPoint(team: team)
         if match.sessionSource == .phone {
             phone.sendControl("addPoint", team: team)
         }
     }
 
-    private func haptic(_ t: WKHapticType) { WKInterfaceDevice.current().play(t) }
     private func formatTime(_ s: Int) -> String { String(format: "%02d:%02d", s / 60, s % 60) }
+}
+
+private func togglePause(match: WatchMatchManager, phone: PhoneSessionManager) {
+    if match.isLocalSession { match.togglePause() }
+    else { phone.sendControl("togglePause") }
 }
 
 // MARK: - Panel ─ 左/右得分面板
 
 struct PanelView: View {
     let name: String; let score: Int; let subtitle: String
-    let hex: String; let supportsMultiPoint: Bool
+    let color: Color; let isLeading: Bool; let badge: String?
+    let supportsMultiPoint: Bool
     let onPoint: () -> Void; let onPlus2: () -> Void; let onPlus3: () -> Void
+
     // 手写双击检测：SwiftUI 内置 .onTapGesture(count:2) 在 watchOS 上时间窗约 300ms 极严，
-    // 加上 ZStack 子视图（Text/miniBtn）会吞手势，实测表现为"点四下才记一分"。
-    // 用状态变量自己实现：第一次点击记时间，0.6s 内再点一次才算双击触发。
-    @State private var lastTapAt: Date? = nil
+    // 加上子视图会吞手势，实测表现为"点四下才记一分"。第一次点击"上膛"，0.6s 内再点才记分。
+    @State private var armedAt: Date? = nil
+    @State private var bump = false
+
+    private static let armWindow: TimeInterval = 0.6
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                .fill(Color(hex: hex))
+        ZStack {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(LinearGradient(colors: [color, color.opacity(0.7)],
+                                     startPoint: .top, endPoint: .bottom))
+                .brightness(isLeading ? 0.04 : -0.04)
 
-            VStack(alignment: .leading, spacing: 0) {
+            // 第一下点击后的"上膛"提示：描边 + 文案，告诉用户再点一次才记分
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(.white.opacity(armedAt != nil ? 0.9 : 0), lineWidth: 2)
+
+            VStack(spacing: 0) {
                 Text(name)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(.white.opacity(0.9))
                     .lineLimit(1)
-                    .padding(.horizontal, 8)
-                    .padding(.top, 8)
+                    .minimumScaleFactor(0.7)
+                    .padding(.horizontal, 6)
+                    .padding(.top, 7)
+
+                Spacer(minLength: 0)
 
                 Text("\(score)")
-                    .font(.system(size: 42, weight: .heavy, design: .rounded))
+                    .font(.system(size: 52, weight: .heavy, design: .rounded))
+                    .monospacedDigit()
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.top, 1)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .contentTransition(.numericText(value: Double(score)))
+                    .scaleEffect(bump ? 1.1 : 1)
+                    .padding(.horizontal, 4)
 
-                Spacer()
-
-                if !subtitle.isEmpty {
-                    Text(subtitle)
-                        .font(.system(size: 9))
-                        .foregroundStyle(.white.opacity(0.45))
-                        .padding(.horizontal, 8)
+                Group {
+                    if armedAt != nil {
+                        Text("再点一次 +1")
+                            .foregroundStyle(.white)
+                    } else if let badge {
+                        Text(badge)
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Palette.pause, in: Capsule())
+                    } else if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .foregroundStyle(.white.opacity(0.55))
+                    } else {
+                        Text(" ")
+                    }
                 }
+                .font(.system(size: 9, weight: .bold))
+                .lineLimit(1)
+
+                Spacer(minLength: 0)
 
                 if supportsMultiPoint {
                     HStack(spacing: 3) {
@@ -544,24 +614,34 @@ struct PanelView: View {
                         miniBtn("+3", action: onPlus3)
                     }
                     .padding(.horizontal, 5)
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 5)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        // 整面板任意位置都参与命中
         .contentShape(Rectangle())
-        // 用普通 onTapGesture（单击）+ 手写双击窗口（0.6s）。
-        // 不用 .onTapGesture(count:2) —— Apple Watch 上时间窗约 300ms 极严，命中率低；
-        // 不用 .simultaneousGesture —— 与 miniBtn (+2/+3 子按钮) 共存时手势识别不稳。
-        // 子按钮自身仍接收单击事件（SwiftUI hit test 内层优先）。
-        .onTapGesture {
-            let now = Date()
-            if let last = lastTapAt, now.timeIntervalSince(last) < 0.6 {
-                lastTapAt = nil
-                onPoint()
-            } else {
-                lastTapAt = now
+        .onTapGesture { handleTap() }
+        .onChange(of: score) { _ in
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) { bump = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) { bump = false }
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: armedAt)
+        .animation(.snappy, value: score)
+    }
+
+    private func handleTap() {
+        let now = Date()
+        if let armed = armedAt, now.timeIntervalSince(armed) < Self.armWindow {
+            armedAt = nil
+            onPoint()
+            return
+        }
+        armedAt = now
+        WKInterfaceDevice.current().play(.click)
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.armWindow) {
+            if let armed = armedAt, Date().timeIntervalSince(armed) >= Self.armWindow {
+                armedAt = nil
             }
         }
     }
@@ -569,17 +649,16 @@ struct PanelView: View {
     private func miniBtn(_ label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(.system(size: 12, weight: .heavy, design: .rounded))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
-                .background(.white.opacity(0.22), in: Capsule())
+                .frame(maxWidth: .infinity, minHeight: 26)
+                .background(.white.opacity(0.24), in: Capsule())
         }
         .buttonStyle(.plain)
     }
 }
 
-// MARK: - Pause Overlay ─ 暂停遮罩（带模糊）
+// MARK: - Pause Overlay ─ 暂停页
 
 struct PauseOverlay: View {
     @EnvironmentObject var match: WatchMatchManager
@@ -591,72 +670,67 @@ struct PauseOverlay: View {
 
     var body: some View {
         ZStack {
-            // 毛玻璃模糊背景
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
-                .overlay(Color.black.opacity(0.45).ignoresSafeArea())
+                .overlay(Color.black.opacity(0.55).ignoresSafeArea())
 
-            VStack(spacing: 10) {
-                // 当前比分
-                Text("\(match.teamAScore)  :  \(match.teamBScore)")
-                    .font(.system(size: 24, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white)
-
-                Text(formatTime(match.elapsedSeconds) + " · 已暂停")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.45))
-
-                // 操作按钮
-                HStack(spacing: 8) {
-                    // 继续
-                    pauseBtn(icon: "play.fill",
-                             label: "继续",
-                             color: Color(hex: "#4CD964")) {
-                        haptic(.start)
-                        if match.isLocalSession { match.togglePause() }
-                        else { phone.sendControl("togglePause") }
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        scoreColumn(name: match.teamAName, score: match.teamAScore, color: Palette.teamA)
+                        Text(":")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.4))
+                        scoreColumn(name: match.teamBName, score: match.teamBScore, color: Palette.teamB)
                     }
-                    // 重新设置（仅本地赛）
-                    if match.isLocalSession {
-                        pauseBtn(icon: "arrow.counterclockwise",
-                                 label: "重设",
-                                 color: Color(hex: "#FFD60A")) {
-                            haptic(.directionUp)
-                            showResetConfirm = true
-                        }
-                    }
-                    // 结束
-                    pauseBtn(icon: "xmark",
-                             label: "结束",
-                             color: Color(hex: "#FF3B30")) {
-                        haptic(.failure)
-                        showFinishConfirm = true
-                    }
-                }
 
-                // 撤销（仅本地赛且有历史）
-                if match.isLocalSession && match.canUndo {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pause.circle.fill").foregroundStyle(Palette.pause)
+                        Text("已暂停 · \(formatTime(match.elapsedSeconds))")
+                            .monospacedDigit()
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                    .font(.system(size: 11, weight: .medium))
+
                     Button {
-                        haptic(.click)
-                        match.undo()
+                        WKInterfaceDevice.current().play(.start)
+                        togglePause(match: match, phone: phone)
                     } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.uturn.backward")
-                            Text("撤销上一分")
-                        }
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.6))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(.white.opacity(0.1), in: Capsule())
+                        Label("继续比赛", systemImage: "play.fill")
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity, minHeight: 40)
+                            .background(Palette.win, in: Capsule())
                     }
                     .buttonStyle(.plain)
+
+                    HStack(spacing: 6) {
+                        if match.canUndo {
+                            smallBtn(icon: "arrow.uturn.backward", label: "撤销", color: .white) {
+                                WKInterfaceDevice.current().play(.click)
+                                let mirror = match.sessionSource == .phone
+                                match.undo()
+                                if mirror { phone.sendControl("undo") }
+                            }
+                        }
+                        if match.isLocalSession {
+                            smallBtn(icon: "arrow.counterclockwise", label: "重设", color: Palette.pause) {
+                                showResetConfirm = true
+                            }
+                        }
+                        smallBtn(icon: "flag.checkered", label: "结束", color: Palette.heart) {
+                            WKInterfaceDevice.current().play(.failure)
+                            showFinishConfirm = true
+                        }
+                    }
                 }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
             }
         }
-        .alert("结束比赛", isPresented: $showFinishConfirm) {
-            Button("结束", role: .destructive) {
+        .alert("结束比赛？", isPresented: $showFinishConfirm) {
+            Button("结束并保存", role: .destructive) {
                 if match.isLocalSession { match.finishLocalMatch() }
                 else {
                     // .phone 镜像赛：手表以最终状态为权威，构建记录经 transferUserInfo
@@ -665,31 +739,49 @@ struct PauseOverlay: View {
                 }
             }
             Button("取消", role: .cancel) {}
+        } message: {
+            Text("当前局领先方记为本局胜者")
         }
-        .alert("重设比赛", isPresented: $showResetConfirm) {
+        .alert("重设比赛？", isPresented: $showResetConfirm) {
             Button("清空重设", role: .destructive) { onReset() }
             Button("取消", role: .cancel) {}
+        } message: {
+            Text("本场比分不会保存")
         }
     }
 
-    private func pauseBtn(icon: String, label: String, color: Color,
+    private func scoreColumn(name: String, score: Int, color: Color) -> some View {
+        VStack(spacing: 0) {
+            Text("\(score)")
+                .font(.system(size: 30, weight: .heavy, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.white)
+            Text(name)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func smallBtn(icon: String, label: String, color: Color,
                           action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 5) {
+            VStack(spacing: 3) {
                 Image(systemName: icon)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(color)
                 Text(label)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.white.opacity(0.75))
             }
-            .frame(width: 54, height: 50)
-            .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
     }
 
-    private func haptic(_ t: WKHapticType) { WKInterfaceDevice.current().play(t) }
     private func formatTime(_ s: Int) -> String { String(format: "%02d:%02d", s / 60, s % 60) }
 }
 
@@ -700,53 +792,82 @@ struct SettlementView: View {
     let result: WatchMatchManager.Result
     @State private var appeared = false
 
+    private var winnerColor: Color { result.winnerIsA ? Palette.teamA : Palette.teamB }
+
     var body: some View {
-        // 单屏结算页：胜者名当主角（大字），简洁现代单绿 accent，不滚动
-        VStack(spacing: 5) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 28, weight: .medium))
-                .foregroundStyle(Color(hex: "#30D158"))
-                .scaleEffect(appeared ? 1 : 0.4)
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 6) {
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 26, weight: .medium))
+                    .foregroundStyle(Palette.pause)
+                    .scaleEffect(appeared ? 1 : 0.3)
+                    .rotationEffect(.degrees(appeared ? 0 : -25))
 
-            // 胜者名 —— 主视觉，大字加粗，长名自动缩
-            Text(result.winnerName)
-                .font(.system(size: 26, weight: .bold))
-                .foregroundStyle(.white)
-                .lineLimit(1).minimumScaleFactor(0.4)
-                .padding(.horizontal, 4)
+                Text(result.winnerName)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1).minimumScaleFactor(0.4)
 
-            // 获胜 —— 绿色小标签，清晰
-            Text("获胜")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color(hex: "#30D158"))
-                .padding(.horizontal, 11)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(Color(hex: "#30D158").opacity(0.18)))
+                Text("获胜")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(winnerColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 2)
+                    .background(winnerColor.opacity(0.2), in: Capsule())
 
-            // 比分 —— 退居次要
-            Text(result.scoreLine)
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.8))
-                .padding(.top, 1)
+                VStack(spacing: 2) {
+                    Text(result.scoreLine)
+                        .font(.system(size: 22, weight: .heavy, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(.white.opacity(0.9))
+                    if !result.detailLine.isEmpty {
+                        Text(result.detailLine)
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(.white.opacity(0.55))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
+                    }
+                    if result.durationSeconds > 0 {
+                        Label(formatDuration(result.durationSeconds), systemImage: "clock")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.white.opacity(0.4))
+                    }
+                }
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity)
+                .background(Palette.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-            Button {
-                match.lastResult = nil
-            } label: {
-                Text("完成")
-                    .font(.system(size: 15, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+                Text("记录已同步到 iPhone 历史")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.white.opacity(0.35))
+
+                Button {
+                    match.lastResult = nil
+                } label: {
+                    Text("完成")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background(Palette.win, in: Capsule())
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Color(hex: "#30D158"))
-            .padding(.top, 4)
+            .padding(.horizontal, 8)
         }
-        .padding(.horizontal, 8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black.ignoresSafeArea())
         .opacity(appeared ? 1 : 0)
-        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: appeared)
-        .onAppear { appeared = true }
+        .animation(.spring(response: 0.45, dampingFraction: 0.7), value: appeared)
+        .onAppear {
+            appeared = true
+            WKInterfaceDevice.current().play(.success)
+        }
+    }
+
+    private func formatDuration(_ s: Int) -> String {
+        s >= 3600
+            ? String(format: "%d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60)
+            : String(format: "%d 分 %02d 秒", s / 60, s % 60)
     }
 }
 
