@@ -15,6 +15,7 @@ final class WatchMatchManager: ObservableObject {
         let setScores: [[Int]]
         let setTimes: [Int]
         let isMatchActive: Bool
+        let eventCount: Int
     }
 
     struct MatchEvent {
@@ -301,6 +302,17 @@ final class WatchMatchManager: ObservableObject {
         return Result(winnerName: winner == 0 ? teamAName : teamBName, scoreLine: scoreLine)
     }
 
+    /// 某方再得 1 分即可拿下本局/整场时返回"局点"/"赛点"，否则 nil。
+    /// 仅对规则已知的回合制比赛生效（镜像网球的规则由手机按 15/30/40 计，手表不猜）。
+    func pointBadge(for team: Int) -> String? {
+        guard isMatchActive, !supportsMultiPoint, ptWin > 0 else { return nil }
+        if sport == "tennis" && sessionSource != .local { return nil }
+        let a = teamAScore + (team == 0 ? 1 : 0)
+        let b = teamBScore + (team == 1 ? 1 : 0)
+        guard rallyWinner(a, b) == team else { return nil }
+        return setWins[team] + 1 >= setWin ? "赛点" : "局点"
+    }
+
     func addPoint(team: Int) {
         addScore(team: team, delta: 1)
     }
@@ -346,7 +358,13 @@ final class WatchMatchManager: ObservableObject {
     }
 
     func undo() {
-        guard sessionSource == .local, let last = history.popLast() else { return }
+        // 镜像赛也要本地回退：手机端比分会随 undo 变小，而 applyPhoneState 是 max 对齐，
+        // 不先降本地值的话手表会一直显示撤销前的比分。
+        guard sessionSource != .none, let last = history.popLast() else { return }
+        if matchEvents.count > last.eventCount {
+            matchEvents.removeLast(matchEvents.count - last.eventCount)
+        }
+        lastEventElapsedMs = matchEvents.last?.elapsedMs ?? 0
         teamAScore = last.teamAScore
         teamBScore = last.teamBScore
         isPaused = last.isPaused
@@ -570,7 +588,8 @@ final class WatchMatchManager: ObservableObject {
                 setWins: setWins,
                 setScores: setScores,
                 setTimes: setTimes,
-                isMatchActive: isMatchActive
+                isMatchActive: isMatchActive,
+                eventCount: matchEvents.count
             )
         )
         canUndo = true
