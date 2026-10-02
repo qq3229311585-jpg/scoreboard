@@ -12,6 +12,7 @@
     *, *::before, *::after {
       box-sizing: border-box; margin: 0; padding: 0;
       -webkit-tap-highlight-color: transparent; user-select: none;
+      -webkit-user-select: none; -webkit-touch-callout: none;
     }
     html, body {
       width: 100%;
@@ -37,7 +38,7 @@
       --safe-bottom: 0px;
       --safe-left: 0px;
     }
-    html[data-platform="android"] {
+    html[data-platform="mobile"] {
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-right: env(safe-area-inset-right, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -439,9 +440,9 @@
     .team-label { font-size: 15px; color: rgba(255,255,255,.8); min-width: 44px; }
     .team-input {
       flex: 1; min-width: 0; background: none; border: none; outline: none;
-      color: #fff; font-size: 15px; font-weight: 600;
+      color: #fff; font-size: 16px; font-weight: 600;
       text-align: right; caret-color: #fff;
-      user-select: text; padding-right: 2px;
+      user-select: text; -webkit-user-select: text; padding-right: 2px;
     }
     .team-input::placeholder { color: rgba(255,255,255,.2); font-weight: 400; }
     #sportSeg {
@@ -486,7 +487,7 @@
     .step-val {
       width: 54px; border: none; background: none; outline: none;
       font-size: 17px; font-weight: 700; color: #fff; text-align: center;
-      font-variant-numeric: tabular-nums; user-select: text;
+      font-variant-numeric: tabular-nums; user-select: text; -webkit-user-select: text;
     }
     .step-val::-webkit-outer-spin-button,
     .step-val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -513,6 +514,7 @@
       transition: filter .2s, opacity .2s;
       overflow: hidden;        /* 涟漪裁剪 */
       min-height: 0;
+      touch-action: manipulation;
       /* 上下留出状态栏 / 导航栏空间 */
       padding: calc(var(--safe-top) + clamp(28px, 5vh, 60px)) 0
                calc(var(--safe-bottom) + clamp(28px, 5vh, 60px));
@@ -547,6 +549,7 @@
       letter-spacing: -4px;
       margin-top: 2px;
     }
+    .p-score.long { font-size: min(24vw, 24vh, 170px); letter-spacing: -3px; }
     .p-sub { min-height: 24px; font-size: clamp(15px, 2.8vh, 25px); font-weight: 700; opacity: .6; margin-top: 6px; }
     .p-sets { margin-top: 10px; font-size: 11px; letter-spacing: 4px; opacity: .4; min-height: 14px; }
     .bb-row {
@@ -565,6 +568,7 @@
       display: flex; align-items: center; justify-content: center;
       transition: background .1s, transform .1s;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+      touch-action: manipulation;
     }
     .bb-btn:active { background: rgba(255,255,255,.32); transform: scale(.91); }
     #statusPill {
@@ -575,7 +579,7 @@
       pointer-events: none; white-space: nowrap; z-index: 10;
     }
     #hrBadge {
-      position: fixed; top: calc(var(--safe-top) + 10px); right: 14px;
+      position: fixed; top: calc(var(--safe-top) + 10px); right: calc(var(--safe-right) + 14px);
       background: rgba(0,0,0,.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       color: rgba(255,255,255,.75); font-size: 11px; font-weight: 700; letter-spacing: .3px;
       padding: 4px 9px; border-radius: 20px;
@@ -588,6 +592,7 @@
       padding: 0 14px;
       background: rgba(0,0,0,.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       color: rgba(255,255,255,.82); font-size: 13px; font-weight: 700; letter-spacing: .4px; cursor: pointer;
+      touch-action: manipulation;
       display: flex; align-items: center; justify-content: center;
       transition: background .15s, transform .15s, min-width .15s;
       font-variant-numeric: tabular-nums;
@@ -878,67 +883,67 @@
     }
     /* 平台专属设置行 */
     html[data-platform="desktop"] .android-only { display: none; }
-    html[data-platform="android"]  .desktop-only { display: none; }
+    html[data-platform="mobile"]  .desktop-only { display: none; }
     /* 桌面端隐藏个人中心 */
     html[data-platform="desktop"] #homeProfileBtn { display: none; }
     html[data-platform="desktop"] #profileScreen  { display: none !important; }
     html[data-platform="desktop"] #personScreen   { display: none !important; }
-    html[data-platform="android"] .back-bar {
+    html[data-platform="mobile"] .back-bar {
       min-height: 44px;
       padding: 0 16px 8px;
       justify-content: flex-start;
     }
-    html[data-platform="android"] .back-btn {
+    html[data-platform="mobile"] .back-btn {
       display: none;
     }
-    html[data-platform="android"].show-back-btn .back-btn {
+    html[data-platform="mobile"].show-back-btn .back-btn {
       display: flex;
     }
 
     @media (orientation: landscape) and (max-height: 560px) {
-      html[data-platform="android"] #homeScreen {
+      html[data-platform="mobile"] #homeScreen {
         justify-content: flex-start;
         padding-top: calc(var(--safe-top) + 10px);
       }
-      html[data-platform="android"] #homeLogo {
+      html[data-platform="mobile"] #homeLogo {
         font-size: clamp(28px, 5.4vw, 58px);
         margin-bottom: 4px;
       }
-      html[data-platform="android"] #homeSub {
+      html[data-platform="mobile"] #homeSub {
         margin-bottom: 24px;
         font-size: 11px;
         letter-spacing: 4px;
       }
-      html[data-platform="android"] .home-btn,
-      html[data-platform="android"] #homeSettingsBtn {
+      html[data-platform="mobile"] .home-btn,
+      html[data-platform="mobile"] #homeSettingsBtn {
         width: min(360px, 52vw);
         padding: 12px 14px;
         margin-bottom: 10px;
         font-size: 15px;
       }
-      html[data-platform="android"] #setupControls,
-      html[data-platform="android"] .settings-scroll,
-      html[data-platform="android"] #historyList,
-      html[data-platform="android"] #detailBody {
+      html[data-platform="mobile"] #setupControls,
+      html[data-platform="mobile"] .settings-scroll,
+      html[data-platform="mobile"] #historyList,
+      html[data-platform="mobile"] #detailBody {
         padding-top: 4px;
         padding-bottom: 18px;
         gap: 8px;
       }
-      html[data-platform="android"] #setupControls {
+      html[data-platform="mobile"] #setupControls {
         display: grid;
         grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
         align-content: start;
         gap: 10px 12px;
       }
-      html[data-platform="android"] #teamsCard {
+      html[data-platform="mobile"] #teamsCard {
         grid-column: 1;
         grid-row: 1;
       }
-      html[data-platform="android"] #rulesCard {
+      html[data-platform="mobile"] #rulesCard {
         grid-column: 1;
         grid-row: 2;
       }
-      html[data-platform="android"] #sportSeg {
+      html[data-platform="mobile"] #sportSeg {
         grid-column: 2;
         grid-row: 1 / span 2;
         display: grid;
@@ -947,83 +952,86 @@
         align-items: start;
         padding: 0;
       }
-      html[data-platform="android"] #startBtn {
+      html[data-platform="mobile"] #startBtn {
         grid-column: 1 / span 2;
         grid-row: 3;
       }
-      html[data-platform="android"] .team-row,
-      html[data-platform="android"] .rule-row,
-      html[data-platform="android"] .settings-row,
-      html[data-platform="android"] .option-row {
+      html[data-platform="mobile"] .team-row,
+      html[data-platform="mobile"] .rule-row,
+      html[data-platform="mobile"] .settings-row,
+      html[data-platform="mobile"] .option-row {
         padding-top: 9px;
         padding-bottom: 9px;
       }
-      html[data-platform="android"] .s-icon {
+      html[data-platform="mobile"] .s-icon {
         width: 48px;
         height: 48px;
         border-radius: 11px;
       }
-      html[data-platform="android"] .s-pill {
+      html[data-platform="mobile"] .s-pill {
         font-size: 10px;
         gap: 6px;
         min-width: 0;
       }
-      html[data-platform="android"] .panel {
+      html[data-platform="mobile"] .panel {
         padding-top: calc(var(--safe-top) + clamp(36px, 6vh, 60px));
         padding-bottom: calc(var(--safe-bottom) + clamp(36px, 6vh, 60px));
       }
-      html[data-platform="android"] #arena {
+      html[data-platform="mobile"] #arena {
         align-items: stretch;
       }
-      html[data-platform="android"] .p-name {
+      html[data-platform="mobile"] .p-name {
         font-size: clamp(13px, 2vh, 17px);
       }
-      html[data-platform="android"] .p-score {
+      html[data-platform="mobile"] .p-score {
         font-size: min(22vw, 34vh, 158px);
         margin-top: 0;
       }
-      html[data-platform="android"] .p-sub {
+      html[data-platform="mobile"] .p-score.long {
+        font-size: min(15vw, 34vh, 120px);
+      }
+      html[data-platform="mobile"] .p-sub {
         min-height: 20px;
         font-size: clamp(13px, 2.1vh, 19px);
         margin-top: 3px;
       }
-      html[data-platform="android"] .p-sets {
+      html[data-platform="mobile"] .p-sets {
         margin-top: 6px;
       }
-      html[data-platform="android"] .bb-row {
+      html[data-platform="mobile"] .bb-row {
         width: min(360px, 84%);
         gap: 14px;
         margin-top: 22px;
       }
-      html[data-platform="android"] .bb-btn {
+      html[data-platform="mobile"] .bb-btn {
         min-height: 88px;
         border-radius: 24px;
         font-size: clamp(32px, 6.2vh, 42px);
       }
-      html[data-platform="android"] #statusPill {
+      html[data-platform="mobile"] #statusPill {
         top: calc(var(--safe-top) + 8px);
         font-size: 10px;
       }
-      html[data-platform="android"] #menuBtn {
+      html[data-platform="mobile"] #menuBtn {
         min-width: 62px;
         height: 36px;
         font-size: 12px;
       }
-      html[data-platform="android"] #menuSheet {
+      html[data-platform="mobile"] #menuSheet {
         justify-content: center;
         padding-top: calc(var(--safe-top) + 12px);
         padding-bottom: calc(var(--safe-bottom) + 12px);
       }
-      html[data-platform="android"] .menu-card {
+      html[data-platform="mobile"] .menu-card {
         width: min(340px, 56vw);
         max-height: min(68vh, 360px);
         margin-bottom: 8px;
       }
-      html[data-platform="android"] .menu-item {
+      html[data-platform="mobile"] .menu-item {
         padding: 11px 16px;
         font-size: 14px;
       }
-      html[data-platform="android"] .menu-cancel {
+      html[data-platform="mobile"] .menu-cancel {
         width: min(340px, 56vw);
         padding: 12px;
       }
@@ -1090,7 +1098,7 @@
 
     /* ── 数据管理（设置页）── */
     #dataManageCard { margin-top:8px; }
-    html[data-nativePlatform="android"] #dataManageCard { display:none; }
+    html[data-native-platform="android"] #dataManageCard { display:none; }
     .import-label { display:inline-block; cursor:pointer; }
     .import-label input[type=file] { display:none; }
     .import-file-btn {
@@ -1466,7 +1474,7 @@
 ══════════════════════════════ -->
 <div class="screen out" id="setupScreen">
   <div class="back-bar">
-    <button class="back-btn" onclick="navTo('home')">‹ 返回</button>
+    <button class="back-btn" onclick="navTo('home','back')">‹ 返回</button>
   </div>
   <div id="setupControls">
     <!-- 队名 -->
@@ -1559,7 +1567,7 @@
 ══════════════════════════════ -->
 <div class="screen out" id="historyScreen">
   <div class="hist-bar">
-    <button class="back-btn" onclick="navTo('home')">‹ 返回</button>
+    <button class="back-btn" onclick="navTo('home','back')">‹ 返回</button>
   </div>
   <div id="historyList"></div>
 </div>
@@ -1582,7 +1590,7 @@
 ══════════════════════════════ -->
 <div class="screen out" id="profileScreen">
   <div class="back-bar pc-bar">
-    <button class="back-btn" onclick="navTo('home')">‹ 返回</button>
+    <button class="back-btn" onclick="navTo('home','back')">‹ 返回</button>
     <span class="pc-bar-title">个人中心</span>
     <button class="hist-export-btn" id="profileEditBtn" onclick="toggleProfileEditMode()">管理</button>
   </div>
@@ -1617,14 +1625,14 @@
 ══════════════════════════════ -->
 <div class="screen out" id="personScreen">
   <div class="back-bar">
-    <button class="back-btn" onclick="navTo('profile')">‹ 个人中心</button>
+    <button class="back-btn" onclick="navTo('profile','back')">‹ 个人中心</button>
   </div>
   <div class="settings-scroll" id="personBody"></div>
 </div>
 
 <div class="screen out" id="settingsScreen">
   <div class="back-bar">
-    <button class="back-btn" onclick="navTo('home')">‹ 返回</button>
+    <button class="back-btn" onclick="navTo('home','back')">‹ 返回</button>
   </div>
   <div class="settings-scroll">
     <!-- 主题折叠区 -->
@@ -1780,7 +1788,7 @@ const registerNativePlugin = name => {
 const WatchPlugin = registerNativePlugin('WatchPlugin');
 const HealthKitPlugin = registerNativePlugin('HealthKitPlugin');
 
-document.documentElement.dataset.platform = APP_PLATFORM === 'ios' ? 'android' : APP_PLATFORM;
+document.documentElement.dataset.platform = (APP_PLATFORM==='android'||APP_PLATFORM==='ios') ? 'mobile' : 'desktop';
 document.documentElement.dataset.nativePlatform = APP_PLATFORM;
 
 // 原生移动端：先用 env() 尝试，不行就按方向给合理默认值；Android 原生层会再注入精确值
@@ -1796,6 +1804,8 @@ if (APP_PLATFORM === 'android' || APP_PLATFORM === 'ios') {
     const lft = parseFloat(cs.left) || 0;
     probe.remove();
     const r = document.documentElement;
+    // env() 受支持时相信测量值（哪怕是 0，说明这台设备真没有刘海/手势条）
+    const envSupported = window.CSS && CSS.supports && CSS.supports('top: env(safe-area-inset-top)');
     const isLandscape = window.innerWidth > window.innerHeight;
     const topFallback = APP_PLATFORM === 'ios'
       ? (isLandscape ? 0 : 28)
@@ -1803,10 +1813,10 @@ if (APP_PLATFORM === 'android' || APP_PLATFORM === 'ios') {
     const bottomFallback = APP_PLATFORM === 'ios'
       ? (isLandscape ? 8 : 16)
       : 16;
-    r.style.setProperty('--safe-top',    (t > 2 ? t : topFallback) + 'px');
-    r.style.setProperty('--safe-right',  (rgt > 2 ? rgt : 0) + 'px');
-    r.style.setProperty('--safe-bottom', (b > 2 ? b : bottomFallback) + 'px');
-    r.style.setProperty('--safe-left',   (lft > 2 ? lft : 0) + 'px');
+    r.style.setProperty('--safe-top',    (envSupported ? t   : (t   > 2 ? t   : topFallback))    + 'px');
+    r.style.setProperty('--safe-right',  (envSupported ? rgt : (rgt > 2 ? rgt : 0))              + 'px');
+    r.style.setProperty('--safe-bottom', (envSupported ? b   : (b   > 2 ? b   : bottomFallback)) + 'px');
+    r.style.setProperty('--safe-left',   (envSupported ? lft : (lft > 2 ? lft : 0))              + 'px');
   };
   applySafeAreaInsets();
   window.addEventListener('resize', applySafeAreaInsets, { passive: true });
@@ -1848,7 +1858,8 @@ function navTo(name, dir) {
   if (name === 'person') renderPersonScreen(currentPersonId);
 
   // 前进时把当前页入栈；后退时不入栈（由调用方 pop 出来）
-  if (goForward) navStack.push(currentScreen);
+  if (name === 'home') navStack.length = 0;
+  else if (goForward) navStack.push(currentScreen);
   currentScreen = name;
 }
 
@@ -2444,7 +2455,7 @@ function checkSet(){
 function tbPt(p){
   S.tbPts[p]++;const tot=S.tbPts[0]+S.tbPts[1];
   if(tot===1||(tot>1&&(tot-1)%2===0))S.serving=1-S.serving;
-  const[ta,tb]=S.tbPts;if((ta>=7||tb>=7)&&Math.abs(ta-tb)>=2){S.tb=false;winSet(ta>tb?0:1);}
+  const[ta,tb]=S.tbPts;if((ta>=7||tb>=7)&&Math.abs(ta-tb)>=2){S.tb=false;const w=ta>tb?0:1;S.games[w]++;winSet(w);}
 }
 function winSet(p){
   S.setLog.push([...S.games]);S.sets[p]++;S.games=[0,0];
@@ -2506,7 +2517,7 @@ function renderBB(){
   setSub(0,'');setSub(1,'');
   setDots(0,0,0);setDots(1,0,0);setServe(-1);showBB(true);setPill(qLabel);
 }
-function setNum(p,v){document.getElementById(p?'scoreB':'scoreA').textContent=v;}
+function setNum(p,v){const el=document.getElementById(p?'scoreB':'scoreA');el.textContent=v;el.classList.toggle('long',String(v).length>=3);}
 function setSub(p,v){document.getElementById(p?'subB':'subA').textContent=v;}
 function setPill(s){document.getElementById('statusPill').textContent=s;}
 function setDots(p,won,total){
@@ -2688,16 +2699,16 @@ function saveMatch(){
     // 这场没有"开心率监测且名字在场上"的人 → 不归属、不保存手表采到的心率
     record.heartRateTimeline=[];
   }
-  stopWatchWorkout(); // 通知手表停止运动，保存数据到健身 App
-  liveHRTimeline = [];
-  updateLiveHRDisplay(0); // 隐藏心率徽章
   try{
     const all=JSON.parse(localStorage.getItem('sb_history')||'[]');
     all.unshift(record);
-    if(all.length>=280 && all.length<=300) maybeWarnHistoryNearLimit(all.length);
+    if(all.length>=280) maybeWarnHistoryNearLimit(all.length);
     if(all.length>300)all.length=300;
     localStorage.setItem('sb_history',JSON.stringify(all));
     S._saved=true; // 移到存档成功后再标记，防止报错时锁死
+    stopWatchWorkout(); // 通知手表停止运动，保存数据到健身 App
+    liveHRTimeline = [];
+    updateLiveHRDisplay(0); // 隐藏心率徽章
     // 异步拉取 HealthKit 心率作为兜底（Watch 直流时已有数据可跳过）
     const _matchId=record.id;
     const _startMs=S.startTime||Date.now()-getElapsedMs();
@@ -2706,7 +2717,9 @@ function saveMatch(){
     if(record.hrProfileId!=null && !record.heartRateTimeline.length) setTimeout(()=>fetchAndStoreHeartRate(_matchId,_startMs,_endMs),300);
     // 有心率归属的比赛，额外查该时段消耗的卡路里
     if(record.hrProfileId!=null) setTimeout(()=>fetchAndStoreActiveEnergy(_matchId,_startMs,_endMs),350);
-  }catch(e){}
+  }catch(e){
+    alert('比赛保存失败，存储空间可能已满。请先导出历史记录并删除部分旧记录后再试。');
+  }
 }
 
 // ══════════════════════════════════════════
@@ -3260,7 +3273,7 @@ function buildFitnessTrend(profile, matches){
     const fmtD=d=>`${d.getMonth()+1}/${d.getDate()}`;
     return `<div style="margin-bottom:12px">
       <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
-        <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.7)">${label}</span>
+        <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.7)">${escapeHtml(label)}</span>
         <span style="font-size:18px;font-weight:700;color:${color}">${Math.round(latest)}</span>
         <span style="font-size:11px;color:rgba(255,255,255,.4)">${unit}</span>
         <span style="font-size:11px;font-weight:600;color:${arrowClr}">${arrow}${Math.abs(Math.round(delta))}</span>
@@ -3338,7 +3351,7 @@ function buildFitnessTrend(profile, matches){
     opponentMap.get(opp).push({d:r.date, v:trimpScore(zoneSecs), opp});
   });
   for(const [opp, pts] of opponentMap){
-    if(pts.length>=2) html+=miniChart(pts,'#34C759','',`vs ${opp} 负荷`);
+    if(pts.length>=2) html+=miniChart(pts,'#34C759','',`vs ${escapeHtml(opp)} 负荷`);
   }
 
   html+='</div></div>';
@@ -3706,10 +3719,10 @@ function persistWatchMatchRecord(record) {
     } else {
       all.unshift(normalized);
     }
-    if (all.length>=280 && all.length<=300) maybeWarnHistoryNearLimit(all.length);
+    if (all.length>=280) maybeWarnHistoryNearLimit(all.length);
     if (all.length > 300) all.length = 300;
     localStorage.setItem('sb_history', JSON.stringify(all));
-    if (currentScreen === 'history') renderHistory();
+    if (currentScreen === 'history') renderHistoryList();
     if (currentScreen === 'detail' && currentDetailId === normalized.id) renderDetail(normalized);
     return true;
   } catch (e) {
@@ -3930,7 +3943,7 @@ function toggleMenu(){document.getElementById('menuSheet').classList.contains('o
 function openMenu(){document.getElementById('menuSheet').classList.add('open');document.getElementById('menuBackdrop').classList.add('open');updateClockActionLabel();}
 function closeMenu(){document.getElementById('menuSheet').classList.remove('open');document.getElementById('menuBackdrop').classList.remove('open');}
 function menuToggleClock(){closeMenu();toggleClock();}
-function menuSwapSides(){closeMenu();clearPendingScore(false);if(!S)return;H.push(clone(S));S.sidesSwapped=!S.sidesSwapped;render();}
+function menuSwapSides(){closeMenu();clearPendingScore(false);if(!S)return;S.sidesSwapped=!S.sidesSwapped;render();}
 function menuFinish(){
   closeMenu();
   clearPendingScore(false);
@@ -3981,7 +3994,7 @@ function finishMatchNow(silent){
   if(!silent) alert('当前完全平分，不能直接结束比赛。');
   return false;
 }
-function menuUndo(){closeMenu();clearPendingScore(false);if(!H.length)return;S=H.pop();document.getElementById('overlay').hidden=true;render();}
+function menuUndo(){closeMenu();clearPendingScore(false);if(!H.length||S._saved)return;const{startTime,elapsedMs,pausedAt,sidesSwapped}=S;S=H.pop();S.startTime=startTime;S.elapsedMs=elapsedMs;S.pausedAt=pausedAt;S.sidesSwapped=sidesSwapped;document.getElementById('overlay').hidden=true;render();}
 function menuReset(){closeMenu();clearPendingScore(false);if(!confirm('重置比赛？当前所有记分数据将清空，无法恢复。'))return;S=mkState();H=[];document.getElementById('overlay').hidden=true;render();}
 function menuNextQuarter(){
   if(!S||S.winner!==null||CFG.sport!=='basketball')return;
@@ -4157,11 +4170,11 @@ function buildMatchupView(all){
       const wcolor=wname===n0?'var(--line-a,#E07060)':'var(--line-b,#6090B8)';
       return `<div class="matchup-row">
         <span class="matchup-row-date">${ds}</span>
-        <span class="matchup-row-score">${sc}</span>
+        <span class="matchup-row-score">${escapeHtml(sc)}</span>
         <span class="matchup-row-winner" style="color:${wcolor}">${escapeHtml(wname)}胜</span>
       </div>`;
     }).join('');
-    return `<div class="matchup-card matchup-card-click" onclick="openMatchupDetail('${encodeURIComponent(key)}')">
+    return `<div class="matchup-card matchup-card-click" onclick="openMatchupDetail('${escapeHtml(encodeURIComponent(key).replace(/'/g,'%27'))}')">
       <div class="matchup-head">
         <span class="matchup-name">${escapeHtml(n0)}</span>
         <span class="matchup-vs">VS</span>
@@ -4650,8 +4663,10 @@ function buildSetHRChart(points, playerName) {
   </div>`;
 }
 
+let _chartGradSeq=0;
 function buildChartFromEvents(evs){
   if(!evs||evs.length<2)return '';
+  const gradSeq=++_chartGradSeq;
   const isDark = colorMode !== 'light';
   const axisClr  = isDark ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.38)';
   const midClr   = isDark ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.30)';
@@ -4687,11 +4702,11 @@ function buildChartFromEvents(evs){
 
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:auto;display:block;overflow:visible">
     <defs>
-      <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--line-a,#D95F4B)" stop-opacity=".4"/><stop offset="1" stop-color="var(--line-a,#D95F4B)" stop-opacity=".05"/></linearGradient>
-      <linearGradient id="gb" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="var(--line-b,#4A7FA8)" stop-opacity=".4"/><stop offset="1" stop-color="var(--line-b,#4A7FA8)" stop-opacity=".05"/></linearGradient>
+      <linearGradient id="ga${gradSeq}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--line-a,#D95F4B)" stop-opacity=".4"/><stop offset="1" style="stop-color:var(--line-a,#D95F4B)" stop-opacity=".05"/></linearGradient>
+      <linearGradient id="gb${gradSeq}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" style="stop-color:var(--line-b,#4A7FA8)" stop-opacity=".4"/><stop offset="1" style="stop-color:var(--line-b,#4A7FA8)" stop-opacity=".05"/></linearGradient>
     </defs>
-    <path d="${areaA}" fill="url(#ga)"/>
-    <path d="${areaB}" fill="url(#gb)"/>
+    <path d="${areaA}" fill="url(#ga${gradSeq})"/>
+    <path d="${areaB}" fill="url(#gb${gradSeq})"/>
     <line x1="${pad.left}" y1="${mid}" x2="${W-pad.right}" y2="${mid}" stroke="${gridClr}" stroke-width="1"/>
     <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${H-pad.bottom}" stroke="${yAxisClr}" stroke-width="1"/>
     <path d="${pathD}" fill="none" stroke="${lineClr}" stroke-width="1.5" stroke-linejoin="round"/>
@@ -4981,8 +4996,8 @@ function buildProgressionChart(r,setSections){
   let dominanceStrips='';
   for(let i=0;i<n-1;i++){
     const x1=parseFloat(xOf(i)),x2=parseFloat(xOf(i+1)),w2=(x2-x1).toFixed(1);
-    if(ptsA[i]>ptsB[i]) dominanceStrips+=`<rect x="${x1.toFixed(1)}" y="${pad.top}" width="${w2}" height="${iH}" fill="${clrA}" opacity=".09"/>`;
-    else if(ptsB[i]>ptsA[i]) dominanceStrips+=`<rect x="${x1.toFixed(1)}" y="${pad.top}" width="${w2}" height="${iH}" fill="${clrB}" opacity=".07"/>`;
+    if(ptsA[i]>ptsB[i]) dominanceStrips+=`<rect x="${x1.toFixed(1)}" y="${pad.top}" width="${w2}" height="${iH}" style="fill:${clrA}" opacity=".09"/>`;
+    else if(ptsB[i]>ptsA[i]) dominanceStrips+=`<rect x="${x1.toFixed(1)}" y="${pad.top}" width="${w2}" height="${iH}" style="fill:${clrB}" opacity=".07"/>`;
   }
 
   // ── 转折点标注：领先权交换时画小三角 ──
@@ -4993,7 +5008,7 @@ function buildProgressionChart(r,setSections){
     if(pl!==-1&&cl!==-1&&pl!==cl){
       const tx=parseFloat(xOf(i)),ty=pad.top-1,s=4;
       const fill=cl===0?'var(--line-a,var(--clr-a,#D95F4B))':'var(--line-b,var(--clr-b,#4A7FA8))';
-      turnMarkers+=`<polygon points="${tx},${ty+s} ${tx-s},${ty-s} ${tx+s},${ty-s}" fill="${fill}" opacity=".75"/>`;
+      turnMarkers+=`<polygon points="${tx},${ty+s} ${tx-s},${ty-s} ${tx+s},${ty-s}" style="fill:${fill}" opacity=".75"/>`;
     }
   }
 
@@ -5034,8 +5049,8 @@ function buildProgressionChart(r,setSections){
     ${turnMarkers}
     <text x="${pad.left}" y="${H-6}" fill="${p_axisClr}" font-size="9">开始</text>
     <text x="${(W-pad.right-2).toFixed(1)}" y="${H-6}" fill="${p_axisClr}" font-size="9" text-anchor="end">结束</text>
-    <text x="${(W-pad.right+3)}" y="${labAY}" fill="var(--line-a,var(--clr-a,#D95F4B))" font-size="9" opacity=".9">${fA}</text>
-    <text x="${(W-pad.right+3)}" y="${labBY}" fill="var(--line-b,var(--clr-b,#4A7FA8))" font-size="9" opacity=".9">${fB}</text>
+    <text x="${(W-pad.right+3)}" y="${labAY}" style="fill:var(--line-a,var(--clr-a,#D95F4B))" font-size="9" opacity=".9">${fA}</text>
+    <text x="${(W-pad.right+3)}" y="${labBY}" style="fill:var(--line-b,var(--clr-b,#4A7FA8))" font-size="9" opacity=".9">${fB}</text>
   </svg>`;
 }
 
@@ -5629,49 +5644,52 @@ function importHistory(event){
   const reader=new FileReader();
   reader.onload=e=>{
     try{
-      const data=JSON.parse(e.target.result);
-      // 支持直接数组格式或带 matches 字段的导出格式
-      let incoming=[];
-      if(Array.isArray(data)) incoming=data;
-      else if(Array.isArray(data.matches)){
-        // 把导出格式转回内部格式（尽量还原）
-        incoming=data.matches.map(m=>({
-          id: m.id,
-          date: new Date(m.date_iso).getTime()||m.id,
-          sport: m.sport,
-          names: [m.player_a,m.player_b],
-          winner: m.winner,
-          duration: m.duration_sec?m.duration_sec*1000:0,
-          rules: m.rules||{},
-          sets: (m.sets||[]).map(s=>[s.score_a,s.score_b]),
-          setScores: (m.sets||[]).map(s=>[s.score_a,s.score_b]),
-          setTimes: [],
-          events: (m.events||[]).map(ev=>({
-            p: ev.scorer_side==='A'?0:1,
-            delta: 1,
-            setIndex: ev.set_no||1,
-            t: 0,
-            elapsedMs: ev.elapsed_sec?ev.elapsed_sec*1000:0,
-            pointMs: ev.point_duration_sec?ev.point_duration_sec*1000:0,
-            cumA: ev.score_a,
-            cumB: ev.score_b,
-          })),
-          _saved: true,
-        }));
+      try{
+        const data=JSON.parse(e.target.result);
+        // 支持直接数组格式或带 matches 字段的导出格式
+        let incoming=[];
+        if(Array.isArray(data)) incoming=data;
+        else if(Array.isArray(data.matches)){
+          // 把导出格式转回内部格式（尽量还原）
+          incoming=data.matches.map(m=>({
+            id: m.id,
+            date: new Date(m.date_iso).getTime()||m.id,
+            sport: m.sport,
+            names: [m.player_a,m.player_b],
+            winner: m.winner,
+            duration: m.duration_sec?m.duration_sec*1000:0,
+            rules: m.rules||{},
+            sets: (m.sets||[]).map(s=>[s.score_a,s.score_b]),
+            setScores: (m.sets||[]).map(s=>[s.score_a,s.score_b]),
+            setTimes: [],
+            events: (m.events||[]).map(ev=>({
+              p: ev.scorer_side==='A'?0:1,
+              delta: 1,
+              setIndex: ev.set_no||1,
+              t: 0,
+              elapsedMs: ev.elapsed_sec?ev.elapsed_sec*1000:0,
+              pointMs: ev.point_duration_sec?ev.point_duration_sec*1000:0,
+              cumA: ev.score_a,
+              cumB: ev.score_b,
+            })),
+            _saved: true,
+          }));
+        }
+        let existing=[];
+        try{existing=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(_){}
+        const existingIds=new Set(existing.map(r=>r.id));
+        const toAdd=incoming.map(normalizeImportedMatch).filter(r=>r&&!existingIds.has(r.id));
+        if(!toAdd.length){alert('没有发现新记录（可能已全部导入过）');return;}
+        const merged=[...toAdd,...existing].sort((a,b)=>b.date-a.date).slice(0,300);
+        localStorage.setItem('sb_history',JSON.stringify(merged));
+        alert(`成功导入 ${toAdd.length} 条记录`);
+        if(typeof renderHistoryList==='function') renderHistoryList();
+      }catch(err){
+        alert('文件格式有误，请选择由本应用导出的 JSON 文件');
       }
-      let existing=[];
-      try{existing=JSON.parse(localStorage.getItem('sb_history')||'[]');}catch(_){}
-      const existingIds=new Set(existing.map(r=>r.id));
-      const toAdd=incoming.map(normalizeImportedMatch).filter(r=>r&&!existingIds.has(r.id));
-      if(!toAdd.length){alert('没有发现新记录（可能已全部导入过）');return;}
-      const merged=[...toAdd,...existing].sort((a,b)=>b.date-a.date).slice(0,300);
-      localStorage.setItem('sb_history',JSON.stringify(merged));
-      alert(`成功导入 ${toAdd.length} 条记录`);
-      if(typeof renderHistoryList==='function') renderHistoryList();
-    }catch(err){
-      alert('文件格式有误，请选择由本应用导出的 JSON 文件');
+    }finally{
+      event.target.value='';
     }
-    event.target.value='';
   };
   reader.readAsText(file);
 }
@@ -5681,6 +5699,7 @@ function importHistory(event){
 // ══════════════════════════════════════════
 function seedDemoHistory(){
   // 演示数据始终写到独立的 sb_demo_history，不污染真实数据
+  if(localStorage.getItem('sb_demo_history')!==null)return; // 已存在（含用户已删空）则不再覆盖
 
   // 简单 PRNG
   function mkRng(seed){
