@@ -92,3 +92,102 @@ export function normalizeWatchRecord(record, activeProfile = null) {
     _saved: true,
   };
 }
+
+// ─────────────────────────────────────────────────────────
+// 以下函数在 mobile-web/index.html 内有同名内联版本，改动需两处同步。
+// ─────────────────────────────────────────────────────────
+
+/**
+ * 网球抢七判定（ITF：先到 7 分且领先 2 分）+ 局数结算。
+ * 抢七获胜等于赢下第 13 局，所以胜方局数要 +1（记 7-6），否则局分会错记成 6-6。
+ * @param {[number,number]} tbPts  抢七比分
+ * @param {[number,number]} games  当前盘内局数（通常 [6,6]）
+ * @returns {{winner:0|1, games:[number,number]}|null} null=尚未分出胜负
+ */
+export function tiebreakResult(tbPts, games) {
+  const [a, b] = tbPts;
+  if ((a >= 7 || b >= 7) && Math.abs(a - b) >= 2) {
+    const winner = a > b ? 0 : 1;
+    const g = [...games];
+    g[winner]++;
+    return { winner, games: g };
+  }
+  return null;
+}
+
+/**
+ * 抢七当前发球方：首发方发 1 分，之后双方轮流各发 2 分（ITF）。
+ * 同时也是"盘末接发方下盘先发"的依据：下一盘先发 = 1 - firstServer。
+ * @param {0|1} firstServer 抢七首分发球方
+ * @param {number} totalPts 抢七已打总分
+ */
+export function tiebreakServer(firstServer, totalPts) {
+  return (firstServer + Math.ceil(totalPts / 2)) % 2;
+}
+
+/**
+ * 下一局的先发球方。
+ * 羽毛球：上一局胜者先发（BWF）。
+ * 乒乓球：每局轮换先发，与胜负无关（ITTF 2.13：上一局先发方下一局先接发）。
+ * @param {'badminton'|'tabletennis'} sport
+ * @param {0|1} winner 上一局胜者
+ * @param {0|1} prevFirstServer 上一局先发方
+ */
+export function nextGameFirstServer(sport, winner, prevFirstServer) {
+  return sport === 'tabletennis' ? 1 - prevFirstServer : winner;
+}
+
+/**
+ * 羽毛球封顶分。21 分制封顶 30（BWF）；BWF 3×15 新制（15 分，封顶 21）；
+ * 其余自定义胜分沿用 +9。
+ */
+export function badmintonPtMax(ptWin) {
+  if (ptWin === 15) return 21;
+  return ptWin + 9;
+}
+
+/**
+ * 是否该提示"换边"（仅提示，不自动换）。
+ * 羽毛球：决胜局一方先到 ceil(胜分/2)（21 分制=11）；
+ * 乒乓球：决胜局一方先到 floor(胜分/2)（11 分制=5）；
+ * 网球：每个奇数局结束（点数 0:0）；抢七每 6 分。
+ * @param {{sport:string, ptWin?:number, setWin?:number}} cfg
+ * @param {object} st 比赛状态（pts/sets/games/tb/tbPts）
+ */
+export function changeEndsDue(cfg, st) {
+  if (!st) return false;
+  const { sport } = cfg;
+  if (sport === 'badminton' || sport === 'tabletennis') {
+    const need = cfg.setWin - 1;
+    if (!(st.sets && st.sets[0] === need && st.sets[1] === need)) return false;
+    const target = sport === 'badminton' ? Math.ceil(cfg.ptWin / 2) : Math.floor(cfg.ptWin / 2);
+    const [a, b] = st.pts;
+    return Math.max(a, b) === target && Math.min(a, b) < target;
+  }
+  if (sport === 'tennis') {
+    if (st.tb) {
+      const tot = st.tbPts[0] + st.tbPts[1];
+      return tot > 0 && tot % 6 === 0;
+    }
+    const g = st.games[0] + st.games[1];
+    return g % 2 === 1 && st.pts[0] === 0 && st.pts[1] === 0;
+  }
+  return false;
+}
+
+/**
+ * 解析 localStorage 里的历史记录。损坏（非法 JSON/非数组）时返回空数组并标记 corrupt，
+ * 调用方在覆盖写回前应先把原文备份，避免一次存档把"读不出来但可能可修复"的数据彻底覆盖。
+ * @param {string|null} raw
+ * @returns {{list:any[], corrupt:boolean}}
+ */
+export function parseHistoryArray(raw) {
+  if (raw == null || raw === '') return { list: [], corrupt: false };
+  try {
+    const v = JSON.parse(raw);
+    if (Array.isArray(v)) return { list: v, corrupt: false };
+    return { list: [], corrupt: true };
+  } catch (e) {
+    return { list: [], corrupt: true };
+  }
+}

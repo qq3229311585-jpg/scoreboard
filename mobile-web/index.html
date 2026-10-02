@@ -1995,7 +1995,7 @@ function inputPt(v){
 function commitPtDraft(){
   CFG.ptWin=clampInt(ptDraft,1,999,CFG.ptWin);
   CFG.ptDeuce=CFG.ptWin-1;
-  CFG.ptMax=CFG.sport==='badminton'?CFG.ptWin+9:null;
+  CFG.ptMax=CFG.sport==='badminton'?badmintonPtMax(CFG.ptWin):null;
   ptDraft=String(CFG.ptWin);
   syncRuleInputs();
 }
@@ -2428,8 +2428,52 @@ function rallyPt(p) {
   if(!S.setTimes) S.setTimes=[S.startTime];
   S.setTimes.push(Date.now());
   if(S.sets[w]>=CFG.setWin){S.winner=w;return;}
-  const ns=CFG.sport==='tabletennis'?1-w:w;
+  const ns=nextGameFirstServer(CFG.sport,w,S.setServe);
   S.setNum++; S.pts=[0,0]; S.setServe=ns; S.serving=ns;
+}
+// ── 与 src/core.js 同名函数保持一致（带单测），改动需两处同步 ──
+function tiebreakResult(tbPts,games){
+  const[a,b]=tbPts;
+  if((a>=7||b>=7)&&Math.abs(a-b)>=2){const winner=a>b?0:1;const g=[...games];g[winner]++;return{winner,games:g};}
+  return null;
+}
+function tiebreakServer(firstServer,totalPts){return(firstServer+Math.ceil(totalPts/2))%2;}
+function nextGameFirstServer(sport,winner,prevFirstServer){return sport==='tabletennis'?1-prevFirstServer:winner;}
+function badmintonPtMax(ptWin){return ptWin===15?21:ptWin+9;}
+function changeEndsDue(cfg,st){
+  if(!st)return false;
+  const{sport}=cfg;
+  if(sport==='badminton'||sport==='tabletennis'){
+    const need=cfg.setWin-1;
+    if(!(st.sets&&st.sets[0]===need&&st.sets[1]===need))return false;
+    const target=sport==='badminton'?Math.ceil(cfg.ptWin/2):Math.floor(cfg.ptWin/2);
+    const[a,b]=st.pts;
+    return Math.max(a,b)===target&&Math.min(a,b)<target;
+  }
+  if(sport==='tennis'){
+    if(st.tb){const tot=st.tbPts[0]+st.tbPts[1];return tot>0&&tot%6===0;}
+    const g=st.games[0]+st.games[1];
+    return g%2===1&&st.pts[0]===0&&st.pts[1]===0;
+  }
+  return false;
+}
+function parseHistoryArray(raw){
+  if(raw==null||raw==='')return{list:[],corrupt:false};
+  try{const v=JSON.parse(raw);return Array.isArray(v)?{list:v,corrupt:false}:{list:[],corrupt:true};}
+  catch(e){return{list:[],corrupt:true};}
+}
+// 读历史用于"写回"：损坏时先把原文备份一份，避免存档把可能还能修复的数据直接覆盖
+function readHistoryForWrite(){
+  const raw=localStorage.getItem('sb_history');
+  const r=parseHistoryArray(raw);
+  if(r.corrupt){try{localStorage.setItem('sb_history_corrupt_backup',raw);}catch(e){}}
+  return r.list;
+}
+// 换边提示：仅提示，不自动换；手动换边（菜单）后在同一比分下不再提示
+function scoreSig(){return JSON.stringify([S.pts,S.sets,S.games,S.tbPts,S.score,S.quarter]);}
+function endsHint(){
+  if(!S||S.winner!==null||!changeEndsDue(CFG,S))return '';
+  return S.swapSig===scoreSig()?'':' · 该换边了';
 }
 function checkRally(a,b) {
   const{ptWin,ptDeuce,ptMax}=CFG;
@@ -2449,13 +2493,15 @@ function tennisPt(p){
 function winGame(p){S.games[p]++;S.pts=[0,0];S.serving=1-S.serving;checkSet();}
 function checkSet(){
   const[ga,gb]=S.games;
-  if(ga===6&&gb===6){S.tb=true;S.tbPts=[0,0];return;}
+  if(ga===6&&gb===6){S.tb=true;S.tbPts=[0,0];S.tbFirst=S.serving;return;}
   let w=-1;if(ga>=6&&ga-gb>=2)w=0;else if(gb>=6&&gb-ga>=2)w=1;if(w>=0)winSet(w);
 }
 function tbPt(p){
-  S.tbPts[p]++;const tot=S.tbPts[0]+S.tbPts[1];
-  if(tot===1||(tot>1&&(tot-1)%2===0))S.serving=1-S.serving;
-  const[ta,tb]=S.tbPts;if((ta>=7||tb>=7)&&Math.abs(ta-tb)>=2){S.tb=false;const w=ta>tb?0:1;S.games[w]++;winSet(w);}
+  S.tbPts[p]++;
+  const first=S.tbFirst==null?S.serving:S.tbFirst; // 兼容旧存档/镜像来的状态
+  const r=tiebreakResult(S.tbPts,S.games);
+  if(r){S.tb=false;S.games=r.games;winSet(r.winner);S.serving=1-first;return;} // 盘末接发方下盘先发
+  S.serving=tiebreakServer(first,S.tbPts[0]+S.tbPts[1]);
 }
 function winSet(p){
   S.setLog.push([...S.games]);S.sets[p]++;S.games=[0,0];
@@ -2496,18 +2542,18 @@ function renderRally(){
   setDots(0,S.sets[0],CFG.totalSets);setDots(1,S.sets[1],CFG.totalSets);
   setServe(S.serving);showBB(false);
   const deuce=S.pts[0]>=CFG.ptDeuce&&S.pts[1]>=CFG.ptDeuce&&S.pts[0]===S.pts[1];
-  setPill(`第 ${S.setNum} 局${deuce?' · 平分':''}`);
+  setPill(`第 ${S.setNum} 局${deuce?' · 平分':''}${endsHint()}`);
 }
 function renderTennis(){
   setNum(0,S.games[0]);setNum(1,S.games[1]);
   setDots(0,S.sets[0],CFG.totalSets);setDots(1,S.sets[1],CFG.totalSets);
   setServe(S.serving);showBB(false);
-  if(S.tb){setSub(0,S.tbPts[0]);setSub(1,S.tbPts[1]);setPill(`第 ${S.sets[0]+S.sets[1]+1} 盘 · 决胜局`);}
+  if(S.tb){setSub(0,S.tbPts[0]);setSub(1,S.tbPts[1]);setPill(`第 ${S.sets[0]+S.sets[1]+1} 盘 · 决胜局${endsHint()}`);}
   else{
     const[wa,wb]=S.pts;
     if(wa>=3&&wb>=3){if(wa===wb){setSub(0,'平');setSub(1,'平');}else if(wa>wb){setSub(0,'占先');setSub(1,'');}else{setSub(0,'');setSub(1,'占先');}}
     else{setSub(0,TP[wa]);setSub(1,TP[wb]);}
-    setPill(`第 ${S.sets[0]+S.sets[1]+1} 盘`);
+    setPill(`第 ${S.sets[0]+S.sets[1]+1} 盘${endsHint()}`);
   }
 }
 function renderBB(){
@@ -2700,7 +2746,7 @@ function saveMatch(){
     record.heartRateTimeline=[];
   }
   try{
-    const all=JSON.parse(localStorage.getItem('sb_history')||'[]');
+    const all=readHistoryForWrite();
     all.unshift(record);
     if(all.length>=280) maybeWarnHistoryNearLimit(all.length);
     if(all.length>300)all.length=300;
@@ -3712,8 +3758,8 @@ function persistWatchMatchRecord(record) {
   }
   if (Array.isArray(normalized.names)) rememberWatchNames(normalized.names);
   try {
-    const all = JSON.parse(localStorage.getItem('sb_history') || '[]');
-    const idx = all.findIndex(item => item.id === normalized.id);
+    const all = readHistoryForWrite();
+    const idx = all.findIndex(item => item && item.id === normalized.id);
     if (idx >= 0) {
       all[idx] = normalized;
     } else {
@@ -3943,7 +3989,7 @@ function toggleMenu(){document.getElementById('menuSheet').classList.contains('o
 function openMenu(){document.getElementById('menuSheet').classList.add('open');document.getElementById('menuBackdrop').classList.add('open');updateClockActionLabel();}
 function closeMenu(){document.getElementById('menuSheet').classList.remove('open');document.getElementById('menuBackdrop').classList.remove('open');}
 function menuToggleClock(){closeMenu();toggleClock();}
-function menuSwapSides(){closeMenu();clearPendingScore(false);if(!S)return;S.sidesSwapped=!S.sidesSwapped;render();}
+function menuSwapSides(){closeMenu();clearPendingScore(false);if(!S)return;S.sidesSwapped=!S.sidesSwapped;S.swapSig=scoreSig();render();}
 function menuFinish(){
   closeMenu();
   clearPendingScore(false);
