@@ -654,6 +654,19 @@
       transition: background .35s ease;
     }
     #overlay[hidden] { display: none; }
+    /* 非阻塞提示条：存档失败/历史接近上限等。不用 alert——手表结束比赛的路径上手机端没人看着，
+       模态 alert 会卡住 WebView。可手动关闭，叠在结算浮层之上。 */
+    #sbNotices { position: fixed; left: 12px; right: 12px; z-index: 10000;
+      top: calc(var(--safe-top, 0px) + 8px); display: flex; flex-direction: column; gap: 8px;
+      pointer-events: none; }
+    .sb-notice { pointer-events: auto; display: flex; align-items: flex-start; gap: 10px;
+      background: rgba(28,28,30,.96); color: #fff; font-size: 14px; line-height: 1.45; font-weight: 600;
+      padding: 12px 12px 12px 14px; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.4);
+      border-left: 4px solid #FFD60A; }
+    .sb-notice.err { border-left-color: #FF453A; }
+    .sb-notice span { flex: 1; min-width: 0; }
+    .sb-notice button { flex-shrink: 0; width: 28px; height: 28px; border: none; border-radius: 50%;
+      background: rgba(255,255,255,.14); color: #fff; font-size: 15px; cursor: pointer; }
     #winName { font-size: clamp(44px, 9vw, 72px); font-weight: 800; letter-spacing: -1px; color: #fff; line-height: 1; }
     #winLabel { font-size: clamp(16px, 3vw, 22px); font-weight: 500; color: rgba(255,255,255,.6); margin-top: 8px; letter-spacing: 3px; }
     #winScore { font-size: 14px; color: rgba(255,255,255,.45); letter-spacing: 3px; margin-top: 14px; }
@@ -2700,6 +2713,24 @@ function finalizeCurrentMatch(winner){
   render();
 }
 
+// 非阻塞提示条（替代 alert）。同文案去重；点 ✕ 关闭；level='err' 用红色强调。
+function showNotice(msg, level){
+  try{
+    let box=document.getElementById('sbNotices');
+    if(!box){box=document.createElement('div');box.id='sbNotices';document.body.appendChild(box);}
+    if([...box.children].some(c=>c.dataset.msg===msg))return;
+    const el=document.createElement('div');
+    el.className='sb-notice'+(level==='err'?' err':'');
+    el.dataset.msg=msg;
+    el.setAttribute('role','status');
+    const t=document.createElement('span');t.textContent=msg;
+    const b=document.createElement('button');b.type='button';b.textContent='✕';b.setAttribute('aria-label','关闭提示');
+    b.onclick=()=>el.remove();
+    el.append(t,b);
+    box.appendChild(el);
+  }catch(e){console.warn('[notice]',msg);}
+}
+
 // 历史最多保存 300 条，超过会从尾部丢弃旧记录。接近上限时提醒用户导出/同步到 Mac。
 function maybeWarnHistoryNearLimit(count){
   try{
@@ -2710,7 +2741,7 @@ function maybeWarnHistoryNearLimit(count){
     const msg = remaining === 0
       ? '历史记录已达 300 条上限，再保存新比赛会覆盖最旧的记录。建议先导出或同步到 Mac。'
       : `历史记录接近上限（${count}/300），仅剩 ${remaining} 条空位。建议尽快导出或同步到 Mac。`;
-    setTimeout(()=>alert(msg), 400);
+    showNotice(msg);
   }catch(_){}
 }
 
@@ -2767,7 +2798,7 @@ function saveMatch(){
     // 有心率归属的比赛，额外查该时段消耗的卡路里
     if(record.hrProfileId!=null) setTimeout(()=>fetchAndStoreActiveEnergy(_matchId,_startMs,_endMs),350);
   }catch(e){
-    alert('比赛保存失败，存储空间可能已满。请先导出历史记录并删除部分旧记录后再试。');
+    showNotice('比赛保存失败，存储空间可能已满。请先导出历史记录并删除部分旧记录后再试。','err');
   }
 }
 
@@ -3776,6 +3807,7 @@ function persistWatchMatchRecord(record) {
     return true;
   } catch (e) {
     console.warn('[Watch] persistWatchMatchRecord failed:', e);
+    showNotice('手表比赛记录保存失败，存储空间可能已满。请先导出历史记录并删除部分旧记录。','err');
     return false;
   }
 }
